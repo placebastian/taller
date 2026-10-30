@@ -1,0 +1,221 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.volver-taller{display:block;padding:10px max(16px,env(safe-area-inset-left,0px)) 0;font:500 13px/1.2 system-ui,sans-serif}.volver-taller a{color:var(--fg,CanvasText);text-decoration:none;opacity:.8}.volver-taller a:hover{opacity:1;text-decoration:underline}</style></head><body><nav class="volver-taller"><a href="./" onclick="if(history.length>1){history.back();return false}">&larr; Todos los proyectos</a></nav>
+<meta charset="utf-8">
+<title>Conexiones de la placa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: diagrama de cables arriba, despues tablas de conexiones, materiales, tamano de la placa y bateria. */
+:root{
+  --bg:#f3f4f2; --panel:#ffffff; --fg:#1d2430; --muted:#5d6878; --line:#d5dbe3; --accent:#d9661f;
+  --v5:#d0342c; --gnd:#4a5260; --paso:#2f6fd0; --servo:#e08a1e; --sens:#2e9e5b; --pcb:#e3efe5; --pcbline:#2e7d4f;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14181e; --panel:#1b2129; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45;
+  --v5:#ff6a5e; --gnd:#aab3c0; --paso:#6ea8ff; --servo:#ffb24d; --sens:#5fd08c; --pcb:#18281f; --pcbline:#5fbf86; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181e; --panel:#1b2129; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45;
+  --v5:#ff6a5e; --gnd:#aab3c0; --paso:#6ea8ff; --servo:#ffb24d; --sens:#5fd08c; --pcb:#18281f; --pcbline:#5fbf86; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.8rem;margin:0;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:72ch}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.box h2{font-family:var(--f-display);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--muted);font-weight:500}
+.diag{overflow-x:auto}
+.diag svg{display:block;width:100%;min-width:760px;height:auto}
+svg text{font-family:var(--f-body);fill:var(--fg)}
+svg .mono{font-family:var(--f-mono);font-size:12px}
+svg .chico{font-size:12px;fill:var(--muted)}
+svg .bloque{fill:var(--panel);stroke:var(--fg);stroke-width:1.4}
+svg .placa{fill:var(--pcb);stroke:var(--pcbline);stroke-width:2}
+svg .chip{fill:var(--fg)}
+svg .chiptxt{fill:var(--panel);font-family:var(--f-mono);font-size:12px}
+svg .v5{stroke:var(--v5);stroke-width:3;fill:none}
+svg .gnd{stroke:var(--gnd);stroke-width:3;fill:none}
+svg .paso{stroke:var(--paso);stroke-width:2;fill:none}
+svg .servo{stroke:var(--servo);stroke-width:2;fill:none}
+svg .sens{stroke:var(--sens);stroke-width:2;fill:none}
+svg .pin{fill:var(--fg)}
+.ley{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);margin-top:8px}
+.ley i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));gap:16px}
+.grid2>*{min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-weight:500;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.m{font-family:var(--f-mono);white-space:nowrap}
+.nota{border-left:3px solid var(--accent);padding:6px 10px;background:var(--bg);border-radius:0 4px 4px 0;font-size:.9rem}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Conexiones de la placa del proyecto</h1>
+    <p>Un Arduino Nano maneja la cinta (motor 28BYJ-48 con un chip ULN2003), el sensor KY-033 de la cuna y los 3 servos MG90S del brazo. Todo se alimenta con 5 V desde un power bank USB. Es el mismo código que ya tenés, con los mismos pines.</p>
+  </header>
+
+  <div class="box diag">
+    <h2>Diagrama</h2>
+    <svg viewBox="0 0 1000 600" role="img" aria-label="Diagrama de conexiones: power bank, interruptor, placa con Nano y ULN2003, motor, servos y sensor">
+      <!-- power bank -->
+      <rect class="bloque" x="20" y="250" width="130" height="80" rx="8"/>
+      <text x="85" y="276" text-anchor="middle" font-weight="600">Batería</text>
+      <text x="85" y="294" text-anchor="middle" class="chico">power bank 5 V</text>
+      <text x="85" y="310" text-anchor="middle" class="chico">o 2×18650 (7,4 V)</text>
+      <!-- interruptor -->
+      <rect class="bloque" x="185" y="230" width="70" height="36" rx="6"/>
+      <text x="220" y="253" text-anchor="middle" class="chico">interruptor</text>
+      <path class="v5" d="M150 268 H185"/>
+      <path class="v5" d="M255 248 H300 V200"/>
+      <path class="gnd" d="M150 312 H300 V420"/>
+      <text x="160" y="345" class="chico">power bank: cable USB cortado (rojo 5 V, negro GND)</text>
+      <rect class="bloque" x="300" y="455" width="150" height="70" rx="6"/>
+      <text x="375" y="477" text-anchor="middle" class="chico">regulador LM2596</text>
+      <text x="375" y="493" text-anchor="middle" class="chico">solo con batería de 6–12 V</text>
+      <rect class="pin" x="470" y="470" width="30" height="10" rx="2"/>
+      <text x="485" y="500" text-anchor="middle" class="chico">puente</text>
+      <text x="485" y="514" text-anchor="middle" class="chico">5V directo / regulador</text>
+
+      <!-- placa -->
+      <rect class="placa" x="285" y="60" width="440" height="480" rx="10"/>
+      <text x="300" y="86" font-weight="600">Tu placa · 100 × 100 mm</text>
+      <!-- bornera y capacitor -->
+      <rect class="bloque" x="290" y="185" width="22" height="250" rx="3"/>
+      <text x="318" y="182" class="chico">bornera 5V / GND</text>
+      <!-- bus 5V y GND -->
+      <path class="v5" d="M300 200 H700"/>
+      <path class="gnd" d="M300 420 H700"/>
+      <text x="610" y="194" class="mono" style="fill:var(--v5)">5 V</text>
+      <text x="610" y="438" class="mono" style="fill:var(--gnd)">GND</text>
+      <!-- capacitor -->
+      <path class="v5" d="M345 200 V280"/><path class="gnd" d="M345 330 V420"/>
+      <rect class="bloque" x="330" y="280" width="30" height="50" rx="4"/>
+      <text x="368" y="300" class="chico">capacitor</text>
+      <text x="368" y="316" class="chico">1000 µF 10 V</text>
+      <!-- Nano -->
+      <rect class="chip" x="420" y="230" width="95" height="160" rx="6"/>
+      <text x="467" y="250" text-anchor="middle" class="chiptxt">NANO</text>
+      <text x="430" y="275" class="chiptxt">5V</text><text x="430" y="372" class="chiptxt">GND</text>
+      <text x="480" y="275" class="chiptxt">D3</text>
+      <text x="480" y="295" class="chiptxt">D5</text><text x="480" y="312" class="chiptxt">D6</text><text x="480" y="329" class="chiptxt">D7</text>
+      <text x="480" y="349" class="chiptxt">D8</text><text x="480" y="364" class="chiptxt">D9</text><text x="480" y="379" class="chiptxt">D10</text>
+      <text x="438" y="388" class="chiptxt" style="font-size:10px">D11 →</text>
+      <path class="v5" d="M420 271 H405 V200"/><path class="gnd" d="M420 368 H405 V420"/>
+      <text x="467" y="410" text-anchor="middle" class="chico">USB para programar</text>
+      <!-- ULN2003 -->
+      <rect class="chip" x="575" y="300" width="70" height="95" rx="5"/>
+      <text x="610" y="318" text-anchor="middle" class="chiptxt">ULN2003</text>
+      <text x="580" y="338" class="chiptxt" style="font-size:10px">IN1..IN4</text>
+      <text x="580" y="384" class="chiptxt" style="font-size:10px">OUT1..4</text>
+      <path class="paso" d="M515 345 H575"/><path class="paso" d="M515 360 H575"/><path class="paso" d="M515 375 H575"/><path class="paso" d="M515 388 H575"/>
+      <path class="gnd" d="M610 395 V420"/>
+      <!-- servos y sensor: senales -->
+      <path class="servo" d="M515 291 H560 V150 H700"/>
+      <path class="servo" d="M515 308 H568 V112 H700"/>
+      <path class="servo" d="M515 325 H576 V74 H700" />
+      <path class="sens" d="M515 271 H552 V250 H700"/>
+      <!-- conectores en el borde de la placa -->
+      <rect class="pin" x="696" y="66" width="12" height="96" rx="2"/>
+      <rect class="pin" x="696" y="244" width="12" height="20" rx="2"/>
+      <rect class="pin" x="696" y="330" width="12" height="70" rx="2"/>
+      <path class="paso" d="M645 340 H696"/><path class="paso" d="M645 352 H696"/><path class="paso" d="M645 364 H696"/><path class="paso" d="M645 376 H696"/>
+      <path class="v5" d="M680 200 V388 H696"/>
+      <text x="704" y="58" class="chico" text-anchor="end">pines S V G</text>
+      <rect class="pin" x="696" y="455" width="12" height="70" rx="2"/>
+      <text x="690" y="450" class="chico" text-anchor="end">libres para agregar</text>
+      <rect class="bloque" x="790" y="440" width="190" height="96" rx="6" style="stroke-dasharray:5 4"/>
+      <text x="885" y="465" text-anchor="middle">Lo que agregues</text>
+      <text x="885" y="485" text-anchor="middle" class="chico">8 conectores S V G:</text>
+      <text x="885" y="501" text-anchor="middle" class="chico">D2 D4 D12 D13 A0 A1 A2 A3</text>
+      <text x="885" y="520" text-anchor="middle" class="chico">+ I2C (A4 SDA, A5 SCL)</text>
+      <path class="sens" d="M708 490 H790" style="stroke-dasharray:6 4"/>
+      <text x="690" y="326" class="chico" text-anchor="end">JST 5 pines</text>
+
+      <!-- dispositivos -->
+      <rect class="bloque" x="790" y="50" width="190" height="40" rx="6"/><text x="885" y="75" text-anchor="middle">Servo pinza · D7</text>
+      <rect class="bloque" x="790" y="94" width="190" height="40" rx="6"/><text x="885" y="119" text-anchor="middle">Servo brazo · D6</text>
+      <rect class="bloque" x="790" y="138" width="190" height="40" rx="6"/><text x="885" y="163" text-anchor="middle">Servo base · D5</text>
+      <path class="servo" d="M708 74 H790"/><path class="servo" d="M708 114 H790"/><path class="servo" d="M708 152 H790"/>
+      <text x="745" y="196" class="chico">marrón GND · rojo 5 V · naranja señal</text>
+      <rect class="bloque" x="790" y="230" width="190" height="48" rx="6"/><text x="885" y="252" text-anchor="middle">KY-033 · D3</text>
+      <text x="885" y="270" text-anchor="middle" class="chico">en la cuna</text>
+      <path class="sens" d="M708 254 H790"/>
+      <rect class="bloque" x="790" y="320" width="190" height="80" rx="6"/><text x="885" y="350" text-anchor="middle">Motor 28BYJ-48</text>
+      <text x="885" y="370" text-anchor="middle" class="chico">su ficha blanca de 5 cables</text>
+      <path class="paso" d="M708 365 H790"/>
+    </svg>
+    <div class="ley"><span><i style="background:var(--v5)"></i>5 V</span><span><i style="background:var(--gnd)"></i>GND (negativo)</span><span><i style="background:var(--paso)"></i>motor de la cinta</span><span><i style="background:var(--servo)"></i>servos</span><span><i style="background:var(--sens)"></i>sensor</span></div>
+  </div>
+
+  <div class="grid2">
+    <div class="box tbl">
+      <h2>Cada conexión</h2>
+      <table>
+        <thead><tr><th>Desde</th><th>Hasta</th><th>Qué es</th></tr></thead>
+        <tbody>
+          <tr><td>Power bank +5 V</td><td>Interruptor → bornera 5V</td><td>Alimentación de todo</td></tr>
+          <tr><td>Power bank GND</td><td>Bornera GND</td><td>Negativo común</td></tr>
+          <tr><td>Bus 5 V</td><td class="m">Nano 5V</td><td>Al pin 5V, <b>no</b> al VIN</td></tr>
+          <tr><td>Bus 5 V</td><td>ULN2003 pin 9 (COM) y cable rojo del motor</td><td>Bobinas del motor</td></tr>
+          <tr><td>Bus 5 V / GND</td><td>Pin V y G de cada servo y del sensor</td><td>Alimentación de servos y sensor</td></tr>
+          <tr><td>Bus GND</td><td>ULN2003 pin 8 y Nano GND</td><td>Negativo común</td></tr>
+          <tr><td class="m">D8, D9, D10, D11</td><td>ULN2003 IN1, IN2, IN3, IN4 (pines 1 a 4)</td><td>Pasos del motor</td></tr>
+          <tr><td>ULN2003 OUT1–OUT4 (pines 16 a 13)</td><td>Ficha JST de 5 pines</td><td>Mismo orden que el modulito que vino con el motor</td></tr>
+          <tr><td class="m">D5 / D6 / D7</td><td>Señal de servo base / brazo / pinza</td><td>Cable naranja de cada servo</td></tr>
+          <tr><td class="m">D3</td><td>Salida del KY-033 (S / DO)</td><td>¿Hay caja en la cuna?</td></tr>
+          <tr><td>Capacitor 1000 µF</td><td>Entre bus 5 V (+) y GND (−)</td><td>Respeta la patita marcada con la franja (−)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box tbl">
+      <h2>Qué comprar para la placa</h2>
+      <table>
+        <thead><tr><th>Pieza</th><th>Cant.</th></tr></thead>
+        <tbody>
+          <tr><td>Arduino Nano (vale un clon con chip CH340)</td><td class="m">1</td></tr>
+          <tr><td>Tiras hembra 1×15 (zócalo para el Nano: se saca y se pone)</td><td class="m">2</td></tr>
+          <tr><td>ULN2003A en encapsulado DIP-16 + zócalo de 16</td><td class="m">1</td></tr>
+          <tr><td>Conector JST XH de 5 pines macho (el motor enchufa ahí)</td><td class="m">1</td></tr>
+          <tr><td>Tira de pines macho 1×3 (3 servos + 1 sensor)</td><td class="m">4</td></tr>
+          <tr><td>Bornera de 2 tornillos, paso 5 mm</td><td class="m">1</td></tr>
+          <tr><td>Capacitor electrolítico 1000 µF 10 V o más + uno de 100 nF</td><td class="m">1 + 1</td></tr>
+          <tr><td>Interruptor (palanquita o de botón)</td><td class="m">1</td></tr>
+          <tr><td>Fusible reseteable de 3 A (opcional, protege si algo hace corto)</td><td class="m">1</td></tr>
+          <tr><td>Tiras de pines macho 1×3 extra (conectores libres) + 1×4 (I2C)</td><td class="m">8 + 1</td></tr>
+          <tr><td>Tira de 3 pines + capuchón (el puente que elige la entrada)</td><td class="m">1</td></tr>
+          <tr><td>Módulo regulador LM2596 (solo si usás batería de 6–12 V)</td><td class="m">1</td></tr>
+          <tr><td>Power bank USB 5 V, 2,4 A o más, 10.000 mAh</td><td class="m">1</td></tr>
+          <tr><td>Cable USB viejo para cortar</td><td class="m">1</td></tr>
+          <tr><td>Alargues de servo de 30 cm (los cables de los servos son cortos)</td><td class="m">3</td></tr>
+          <tr><td>Tornillos M2×8 + tuercas para la caja (4 de la placa + 4 de la tapa)</td><td class="m">8</td></tr>
+          <tr><td>Abrojo (velcro) para sujetar la batería en su caja</td><td class="m">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h2>Qué placa pedir</h2>
+      <p style="margin:0 0 8px"><b>100 × 100 mm</b>, con 4 agujeros de 2,2 mm a 3,5 mm de cada esquina para los tornillos M2 de la caja. Es el tamaño más grande dentro del precio más barato de los fabricantes de placas, y deja lugar para los 8 conectores libres, el I2C y el regulador.</p>
+      <p class="nota" style="margin:0">Una placa a medida hay que dibujarla antes en un programa como EasyEDA. Si es tu primera vez, la alternativa más simple es una <b>placa perforada de 10 × 10 cm</b> soldada a mano siguiendo este diagrama: entra igual en la caja.</p>
+    </div>
+    <div class="box">
+      <h2>Batería</h2>
+      <p style="margin:0 0 8px"><b>Para empezar: power bank USB de 5 V, 2,4 A o más y 10.000 mAh.</b> Ya trae cargador y protecciones, y va con el puente en "5V directo". Debería andar unas 8 a 10 horas seguidas; es una estimación con un consumo medio de unos 0,6 A.</p>
+      <p style="margin:0 0 8px"><b>Si después agregás varios servos más:</b> 2 pilas 18650 con su plaqueta protectora (BMS 2S) y cargador, y el puente en "regulador" con un LM2596. Da más corriente que un power bank, pero hay que armarlo con cuidado porque son pilas de litio.</p>
+      <p class="nota" style="margin:0">Algunos power banks se apagan solos si se consume muy poco. Cuando la cinta para, el motor se apaga. Si el tuyo se corta, buscá uno con "modo de baja corriente".</p>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>Antes de enchufar</h2>
+    <ol style="margin:0;padding-left:1.2em;display:grid;gap:6px">
+      <li>Con el interruptor apagado, medí con un tester que no haya corto entre 5 V y GND.</li>
+      <li>Para cargar el programa por USB, <b>apagá el interruptor</b>: así el USB de la compu y el power bank no se mezclan.</li>
+      <li>Probá una cosa por vez: primero el motor, después el sensor (con <code>k</code>) y por último los servos.</li>
+    </ol>
+  </div>
+</div>
+
+</body></html>

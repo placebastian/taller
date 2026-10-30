@@ -1,0 +1,161 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Taller de Bastian</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una ficha tecnica por proyecto, apiladas; cada ficha: texto y medidas a la izquierda, las paginas para ver a la derecha (en celular, una debajo de la otra). */
+:root{
+  --bg:#eceff2; --panel:#ffffff; --fg:#1d2430; --muted:#5a6575; --line:#d3d9e0; --accent:#c4561a; --accent-ink:#ffffff;
+  --ok:#2e7d4f; --wip:#a8650f; --idea:#3f63a0; --chip-bg:#f3f5f7;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13171c; --panel:#1a2027; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45; --accent-ink:#1a0e06;
+  --ok:#5fcf8c; --wip:#f2b14c; --idea:#8fb0e6; --chip-bg:#222932; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13171c; --panel:#1a2027; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45; --accent-ink:#1a0e06;
+  --ok:#5fcf8c; --wip:#f2b14c; --idea:#8fb0e6; --chip-bg:#222932; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header{display:grid;gap:10px;padding-bottom:6px}
+h1{font-family:var(--f-display);font-weight:800;font-stretch:118%;font-size:clamp(2rem,5.5vw,3.1rem);line-height:1;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.lede{margin:0;max-width:62ch;color:var(--muted);font-size:1.02rem}
+.meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+.ficha{background:var(--panel);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);overflow:hidden}
+.ficha>*{min-width:0}
+.info{padding:20px 22px;display:grid;gap:12px;align-content:start}
+.lado{padding:20px 22px;border-left:1px solid var(--line);display:grid;gap:16px;align-content:start;background:color-mix(in srgb,var(--panel) 92%,var(--bg))}
+@media (max-width:760px){.ficha{grid-template-columns:minmax(0,1fr)}.lado{border-left:0;border-top:1px solid var(--line)}}
+.tit{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+h2{font-family:var(--f-display);font-weight:700;font-stretch:100%;font-size:1.45rem;line-height:1.15;margin:0;text-wrap:balance}
+.estado{font-family:var(--f-mono);font-size:.72rem;font-weight:500;letter-spacing:.04em;padding:3px 8px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.estado.wip{color:var(--wip)} .estado.ok{color:var(--ok)} .estado.idea{color:var(--idea)}
+.info p{margin:0;max-width:62ch}
+.medidas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:2px 0 0}
+.medidas div{background:var(--panel);padding:7px 10px}
+.medidas dt{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.medidas dd{margin:0;font-family:var(--f-mono);font-size:.9rem;font-variant-numeric:tabular-nums}
+h3{font-family:var(--f-display);font-weight:600;font-stretch:100%;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.paginas{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.paginas a{display:grid;grid-template-columns:auto 1fr;gap:0 10px;padding:7px 8px;margin:0 -8px;border-radius:4px;color:var(--fg);text-decoration:none}
+.paginas a:hover{background:var(--chip-bg)}
+.paginas a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.paginas .flecha{color:var(--accent);font-family:var(--f-mono);grid-row:span 2;line-height:1.5}
+.paginas .n{font-weight:600}
+.paginas .d{color:var(--muted);font-size:.86rem;grid-column:2}
+.ficha.solo{grid-template-columns:minmax(0,1fr)}
+.aviso{font-size:.82rem;color:var(--muted);margin:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:6px 8px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-weight:500;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.m{font-family:var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+footer{color:var(--muted);font-size:.85rem;max-width:70ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Taller de Bastian</h1>
+    <p class="lede">Proyectos de impresión 3D y electrónica: modelos para girar y mirar en 3D, e instrucciones de armado paso a paso.</p>
+    <div class="meta"><span>Impresora <b>Snapmaker U1</b></span><span>Cama <b>270 × 270 mm</b></span><span>Materiales <b>PLA y PETG</b></span><span>Actualizado <b>30-oct-2026</b></span></div>
+  </header>
+
+  <article class="ficha" id="brazo">
+    <div class="info">
+      <div class="tit"><h2>Brazo pick-and-place para la cinta</h2><span class="estado wip">Armando la pinza</span></div>
+      <p>Tres servos SG90: la base gira 180°, el brazo sube y baja con la pinza siempre vertical, y la pinza cierra dos dedos en paralelo con engranajes. Toma cajas del medio de la cinta y las deja en la bandeja de atrás.</p>
+      <dl class="medidas">
+        <div><dt>Cajas</dt><dd>50–60 mm</dd></div>
+        <div><dt>Pinza abre</dt><dd>73 mm</dd></div>
+        <div><dt>Alcance</dt><dd>85 mm</dd></div>
+        <div><dt>Sube</dt><dd>36 mm</dd></div>
+        <div><dt>Tornillos</dt><dd>M2×8 + tuerca</dd></div>
+        <div><dt>Servos</dt><dd>3 × SG90</dd></div>
+      </dl>
+    </div>
+    <div class="lado">
+      <div>
+        <h3>Ver</h3>
+        <ul class="paginas">
+          <li><a href="brazo-ciclo.html"><span class="flecha">→</span><span class="n">Ciclo animado</span><span class="d">El brazo solo, tomando y dejando una caja</span></a></li>
+          <li><a href="brazo-con-cinta.html"><span class="flecha">→</span><span class="n">Con la cinta</span><span class="d">Montado sobre la cinta real</span></a></li>
+          <li><a href="brazo-proyecto-completo.html"><span class="flecha">→</span><span class="n">Proyecto completo</span><span class="d">Cinta, cuna con sensor y conexiones</span></a></li>
+          <li><a href="brazo-armado.html"><span class="flecha">→</span><span class="n">Armado paso a paso</span><span class="d">En 3D, un paso por página</span></a></li>
+          <li><a href="brazo-pieza-de-prueba.html"><span class="flecha">→</span><span class="n">Pieza de prueba</span><span class="d">Para probar el horn del servo antes de imprimir todo</span></a></li>
+          <li><a href="brazo-conexiones.html"><span class="flecha">→</span><span class="n">Conexiones de la placa</span><span class="d">Qué cable va a cada pin</span></a></li>
+          <li><a href="brazo-armado-placa.html"><span class="flecha">→</span><span class="n">Armado de la placa perforada</span><span class="d">Dónde va cada pieza y cada soldadura</span></a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <article class="ficha" id="cinta">
+    <div class="info">
+      <div class="tit"><h2>Cinta transportadora 28BYJ-48</h2><span class="estado ok">Versión 2 terminada</span></div>
+      <p>Una banda de 40 eslabones que encastran a presión, arrastrada por ruedas dentadas: no patina y casi no necesita tensión. La mueve un motor paso a paso 28BYJ-48 con su placa ULN2003.</p>
+      <dl class="medidas">
+        <div><dt>Largo</dt><dd>204 mm</dd></div>
+        <div><dt>Ancho útil</dt><dd>40 mm</dd></div>
+        <div><dt>Paso</dt><dd>10 mm</dd></div>
+        <div><dt>Eslabones</dt><dd>40 + 2</dd></div>
+        <div><dt>Ruedas</dt><dd>8 dientes</dd></div>
+        <div><dt>Material</dt><dd>PETG o PLA</dd></div>
+      </dl>
+    </div>
+    <div class="lado">
+      <div>
+        <h3>Ver</h3>
+        <ul class="paginas">
+          <li><a href="cinta-v2.html"><span class="flecha">→</span><span class="n">Visor 3D</span><span class="d">Girala, separá las piezas y hacela andar</span></a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <article class="ficha" id="formicario">
+    <div class="info">
+      <div class="tit"><h2>Formicario Camponotus</h2><span class="estado idea">Diseño · falta el STL</span></div>
+      <p>Nido y área de forrajeo impresos en una sola pieza. La tapa de acrílico se sostiene con imanes, y el reservorio de humedad tiene su propia tapa: se moja sin abrir el nido.</p>
+      <dl class="medidas">
+        <div><dt>Pieza</dt><dd>210 × 210 × 60 mm</dd></div>
+        <div><dt>Túneles</dt><dd>10 mm</dd></div>
+        <div><dt>Alto interior</dt><dd>11 mm</dd></div>
+        <div><dt>Imanes</dt><dd>Ø6 × 2 mm</dd></div>
+      </dl>
+    </div>
+    <div class="lado">
+      <div>
+        <h3>Ver</h3>
+        <ul class="paginas">
+          <li><a href="formicario.html"><span class="flecha">→</span><span class="n">Visor 3D con hormigas</span><span class="d">Despiece, luz roja y primer plano de la reina</span></a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <article class="ficha solo" id="tornilleria">
+    <div class="info">
+      <div class="tit"><h2>Tornillería M2</h2><span class="estado ok">En uso</span></div>
+      <p>Las medidas de agujeros, tuercas y pivotes que funcionaron en la Snapmaker U1 con PLA y el perfil 0.20 Standard. Los modelos nuevos parten de acá.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Qué</th><th>Medida</th><th>Para qué</th></tr></thead>
+          <tbody>
+            <tr><td>Agujero pasante</td><td class="m">Ø2,7</td><td>El tornillo pasa suelto</td></tr>
+            <tr><td>Agujero de rosca</td><td class="m">Ø1,9</td><td>El tornillo hace su rosca en el plástico</td></tr>
+            <tr><td>Tuerca en ranura</td><td class="m">4,0 + 0,25 por lado</td><td>Entra deslizando de costado</td></tr>
+            <tr><td>Tuerca en hexágono</td><td class="m">1,8 de hondo</td><td>Tuerca cautiva desde abajo</td></tr>
+            <tr><td>Perno impreso</td><td class="m">Ø4,5 / Ø4,9</td><td>Eje de pivotes y engranajes</td></tr>
+            <tr><td>Arandela impresa</td><td class="m">Ø8 × 1,2</td><td>Apoya en la punta del perno</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aviso">Con un M2×8, la pieza que gira puede tener hasta 4 mm de espesor.</p>
+    </div>
+  </article>
+
+  <footer>Los modelos se generan con código (Python y manifold3d) y pasan por tests de choques y de montaje antes de imprimirse.</footer>
+</div>
+
+</body></html>

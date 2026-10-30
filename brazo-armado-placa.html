@@ -1,0 +1,380 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.volver-taller{display:block;padding:10px max(16px,env(safe-area-inset-left,0px)) 0;font:500 13px/1.2 system-ui,sans-serif}.volver-taller a{color:var(--fg,CanvasText);text-decoration:none;opacity:.8}.volver-taller a:hover{opacity:1;text-decoration:underline}</style></head><body><nav class="volver-taller"><a href="./" onclick="if(history.length>1){history.back();return false}">&larr; Todos los proyectos</a></nav>
+<meta charset="utf-8">
+<title>Armado de la placa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: dibujo de la placa arriba; debajo, que va en cada pin, orden de soldado y prueba. */
+:root{
+  --bg:#f2f3f0; --panel:#ffffff; --fg:#1d2430; --muted:#5d6878; --line:#d5dbe3; --accent:#d9661f;
+  --pcb:#c9a46a; --pcbborde:#9b7b47; --agujero:#7a5e33; --v5:#d0342c; --gnd:#3f4652; --paso:#2f6fd0;
+  --servo:#e08a1e; --sens:#1f9d55; --bat:#b0127a; --mod:#2c6e49; --nano:#1d4f91; --header:#2b2f36;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14181e; --panel:#1b2129; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45;
+  --pcb:#6e5a3a; --pcbborde:#a88a57; --agujero:#2b2216; --v5:#ff6a5e; --gnd:#b9c1cc; --paso:#6ea8ff;
+  --servo:#ffb24d; --sens:#47d68a; --bat:#f06ac0; --mod:#3f9e6a; --nano:#4f86d6; --header:#0d0f12; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181e; --panel:#1b2129; --fg:#e4e8ee; --muted:#9aa5b4; --line:#2c3440; --accent:#f08a45;
+  --pcb:#6e5a3a; --pcbborde:#a88a57; --agujero:#2b2216; --v5:#ff6a5e; --gnd:#b9c1cc; --paso:#6ea8ff;
+  --servo:#ffb24d; --sens:#47d68a; --bat:#f06ac0; --mod:#3f9e6a; --nano:#4f86d6; --header:#0d0f12; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.8rem;margin:0;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:74ch}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.box h2{font-family:var(--f-display);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--muted);font-weight:500}
+.dib{overflow-x:auto}
+.dib svg{display:block;width:100%;min-width:820px;height:auto}
+svg text{font-family:var(--f-body);fill:var(--fg);font-size:13px}
+svg .chico{font-size:12px;fill:var(--muted)}
+svg .fuerte{font-weight:600}
+svg .mono{font-family:var(--f-mono);font-size:12px}
+svg .rojo{fill:var(--v5)} svg .gris{fill:var(--gnd)}
+svg .pinlbl{font-family:var(--f-mono);font-size:9px;fill:var(--fg)}
+svg .chiptxt{fill:#fff;font-family:var(--f-mono);font-size:12px}
+svg .chiptxt.peq{font-size:10px}
+svg .placa{fill:var(--pcb);stroke:var(--pcbborde);stroke-width:2}
+svg .agujero{fill:var(--agujero)}
+svg .tornillo{fill:var(--bg);stroke:var(--fg);stroke-width:1.5}
+svg .bloque{fill:var(--header)}
+svg .modulo{fill:var(--mod)}
+svg .nano{fill:var(--nano)}
+svg .usb{fill:#9aa5b1}
+svg .header{fill:var(--header)}
+svg .cap{fill:#1f3a7a;stroke:#fff;stroke-width:1}
+svg .cap2{fill:#d9a400}
+svg .pin{fill:#e8c35a;stroke:#5a4520;stroke-width:1}
+svg .pinnano{fill:#e8c35a}
+svg .ext{fill:var(--panel);stroke:var(--fg);stroke-width:1.4}
+svg .ext.sensor{stroke:var(--sens);stroke-width:2.5}
+svg path{fill:none;stroke-linejoin:round}
+svg .v5{stroke:var(--v5);stroke-width:2.2} svg .gnd{stroke:var(--gnd);stroke-width:2.2}
+svg .grueso{stroke-width:4} svg .fino{stroke-width:1.4}
+svg .paso{stroke:var(--paso);stroke-width:2} svg .servo{stroke:var(--servo);stroke-width:2}
+svg .sens{stroke:var(--sens);stroke-width:2.6} svg .bat{stroke:var(--bat);stroke-width:2.4}
+.ley{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);margin-top:8px}
+.ley i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid2>*{min-width:0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-weight:500;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.m{font-family:var(--f-mono);white-space:nowrap}
+tr.ir td{background:color-mix(in srgb, var(--sens) 14%, transparent)}
+ol{margin:0;padding-left:1.25em;display:grid;gap:7px}
+.nota{border-left:3px solid var(--accent);padding:6px 10px;background:var(--bg);border-radius:0 4px 4px 0;font-size:.9rem;margin:10px 0 0}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Armado de la placa perforada</h1>
+    <p>Placa de 10 × 10 cm vista desde arriba: dónde va cada pieza y por dónde pasa cada cable. El Nano se enchufa en tiras hembra, el módulo ULN2003 (el tuyo) va atornillado, y abajo quedan los conectores de 3 pines para los servos, el <b>sensor infrarrojo KY-033</b> y lo que agregues después.</p>
+  </header>
+
+  <div class="box dib">
+    <h2>La placa, vista de arriba</h2>
+    <svg viewBox="0 0 1080 720" role="img" aria-label="Vista de arriba de la placa perforada de 10 por 10 cm con cada pieza y cada cable"><defs><pattern id="agujeros" x="0" y="0" width="15.24" height="15.24" patternUnits="userSpaceOnUse"><circle cx="7.62" cy="7.62" r="1.7" class="agujero"/></pattern></defs><rect class="placa" x="220.0" y="40.0" width="600.0" height="600.0" rx="8"/>
+<rect x="220.0" y="40.0" width="600.0" height="600.0" fill="url(#agujeros)" rx="8"/>
+<circle class="tornillo" cx="241.0" cy="61.0" r="6.6"/>
+<circle class="tornillo" cx="799.0" cy="61.0" r="6.6"/>
+<circle class="tornillo" cx="241.0" cy="619.0" r="6.6"/>
+<circle class="tornillo" cx="799.0" cy="619.0" r="6.6"/>
+<path class="v5 grueso" d="M256.0 226.0 L802.0 226.0"/>
+<path class="gnd grueso" d="M256.0 250.0 L802.0 250.0"/>
+<path class="v5 grueso" d="M256.0 538.0 L802.0 538.0"/>
+<path class="gnd grueso" d="M256.0 562.0 L802.0 562.0"/>
+<path class="v5 grueso" d="M802.0 226.0 L802.0 538.0"/>
+<path class="gnd grueso" d="M778.0 250.0 L778.0 562.0"/>
+<text class="mono rojo" x="268.0" y="217.0" text-anchor="start">riel 5 V</text>
+<text class="mono gris" x="268.0" y="277.0" text-anchor="start">riel GND</text>
+<rect class="bloque" x="238.0" y="82.0" width="42.0" height="90.0" rx="3"/>
+<circle class="pin" cx="259.0" cy="100.0" r="4"/>
+<text class="chico" x="229.0" y="106.0" text-anchor="end">+</text>
+<circle class="pin" cx="259.0" cy="130.0" r="4"/>
+<text class="chico" x="229.0" y="136.0" text-anchor="end">−</text>
+<circle class="pin" cx="259.0" cy="160.0" r="4"/>
+<text class="chico" x="229.0" y="166.0" text-anchor="end"></text>
+<text class="chico" x="238.0" y="73.0" text-anchor="start">bornera BAT</text>
+<rect class="modulo" x="316.0" y="64.0" width="258.0" height="126.0" rx="3"/>
+<text class="chiptxt" x="445.0" y="118.0" text-anchor="middle">LM2596 · salida 5 V</text>
+<text class="chiptxt peq" x="445.0" y="151.0" text-anchor="middle">IN+ IN−      OUT+ OUT−</text>
+<path class="bat" d="M280.0 100.0 L328.0 100.0"/>
+<path class="gnd" d="M280.0 130.0 L304.0 130.0 L304.0 166.0 L328.0 166.0"/>
+<circle class="pin" cx="328.0" cy="100.0" r="4"/>
+<circle class="pin" cx="328.0" cy="166.0" r="4"/>
+<circle class="pin" cx="562.0" cy="100.0" r="4"/>
+<circle class="pin" cx="562.0" cy="166.0" r="4"/>
+<path class="v5" d="M562.0 100.0 L598.0 100.0 L598.0 226.0"/>
+<path class="gnd" d="M562.0 166.0 L586.0 166.0 L586.0 250.0"/>
+<circle class="cap" cx="652.0" cy="130.0" r="30.0"/>
+<text class="chiptxt peq" x="652.0" y="139.0" text-anchor="middle">1000 µF</text>
+<path class="v5" d="M640.0 160.0 L640.0 226.0"/>
+<path class="gnd" d="M664.0 160.0 L664.0 250.0"/>
+<text class="chico" x="694.0" y="112.0" text-anchor="start">franja (−) hacia GND</text>
+<rect class="nano" x="256.0" y="301.0" width="240.6" height="121.4" rx="3"/>
+<rect class="usb" x="226.0" y="337.7" width="36.0" height="48.0" rx="2"/>
+<text class="chico" x="220.0" y="439.7" text-anchor="middle">USB</text>
+<circle class="pinnano" cx="268.0" cy="316.0" r="4"/>
+<text class="pinlbl" x="268.0" y="307.0" text-anchor="middle">D12</text>
+<circle class="pinnano" cx="283.2" cy="316.0" r="4"/>
+<text class="pinlbl" x="283.2" y="307.0" text-anchor="middle">D11</text>
+<circle class="pinnano" cx="298.5" cy="316.0" r="4"/>
+<text class="pinlbl" x="298.5" y="307.0" text-anchor="middle">D10</text>
+<circle class="pinnano" cx="313.7" cy="316.0" r="4"/>
+<text class="pinlbl" x="313.7" y="307.0" text-anchor="middle">D9</text>
+<circle class="pinnano" cx="329.0" cy="316.0" r="4"/>
+<text class="pinlbl" x="329.0" y="307.0" text-anchor="middle">D8</text>
+<circle class="pinnano" cx="344.2" cy="316.0" r="4"/>
+<text class="pinlbl" x="344.2" y="307.0" text-anchor="middle">D7</text>
+<circle class="pinnano" cx="359.4" cy="316.0" r="4"/>
+<text class="pinlbl" x="359.4" y="307.0" text-anchor="middle">D6</text>
+<circle class="pinnano" cx="374.7" cy="316.0" r="4"/>
+<text class="pinlbl" x="374.7" y="307.0" text-anchor="middle">D5</text>
+<circle class="pinnano" cx="389.9" cy="316.0" r="4"/>
+<text class="pinlbl" x="389.9" y="307.0" text-anchor="middle">D4</text>
+<circle class="pinnano" cx="405.2" cy="316.0" r="4"/>
+<text class="pinlbl" x="405.2" y="307.0" text-anchor="middle">D3</text>
+<circle class="pinnano" cx="420.4" cy="316.0" r="4"/>
+<text class="pinlbl" x="420.4" y="307.0" text-anchor="middle">D2</text>
+<circle class="pinnano" cx="435.6" cy="316.0" r="4"/>
+<text class="pinlbl" x="435.6" y="307.0" text-anchor="middle">GND</text>
+<circle class="pinnano" cx="450.9" cy="316.0" r="4"/>
+<text class="pinlbl" x="450.9" y="307.0" text-anchor="middle">RST</text>
+<circle class="pinnano" cx="466.1" cy="316.0" r="4"/>
+<text class="pinlbl" x="466.1" y="307.0" text-anchor="middle">RX0</text>
+<circle class="pinnano" cx="481.4" cy="316.0" r="4"/>
+<text class="pinlbl" x="481.4" y="307.0" text-anchor="middle">TX1</text>
+<circle class="pinnano" cx="268.0" cy="407.4" r="4"/>
+<text class="pinlbl" x="268.0" y="424.4" text-anchor="middle">D13</text>
+<circle class="pinnano" cx="283.2" cy="407.4" r="4"/>
+<text class="pinlbl" x="283.2" y="424.4" text-anchor="middle">3V3</text>
+<circle class="pinnano" cx="298.5" cy="407.4" r="4"/>
+<text class="pinlbl" x="298.5" y="424.4" text-anchor="middle">REF</text>
+<circle class="pinnano" cx="313.7" cy="407.4" r="4"/>
+<text class="pinlbl" x="313.7" y="424.4" text-anchor="middle">A0</text>
+<circle class="pinnano" cx="329.0" cy="407.4" r="4"/>
+<text class="pinlbl" x="329.0" y="424.4" text-anchor="middle">A1</text>
+<circle class="pinnano" cx="344.2" cy="407.4" r="4"/>
+<text class="pinlbl" x="344.2" y="424.4" text-anchor="middle">A2</text>
+<circle class="pinnano" cx="359.4" cy="407.4" r="4"/>
+<text class="pinlbl" x="359.4" y="424.4" text-anchor="middle">A3</text>
+<circle class="pinnano" cx="374.7" cy="407.4" r="4"/>
+<text class="pinlbl" x="374.7" y="424.4" text-anchor="middle">A4</text>
+<circle class="pinnano" cx="389.9" cy="407.4" r="4"/>
+<text class="pinlbl" x="389.9" y="424.4" text-anchor="middle">A5</text>
+<circle class="pinnano" cx="405.2" cy="407.4" r="4"/>
+<text class="pinlbl" x="405.2" y="424.4" text-anchor="middle">A6</text>
+<circle class="pinnano" cx="420.4" cy="407.4" r="4"/>
+<text class="pinlbl" x="420.4" y="424.4" text-anchor="middle">A7</text>
+<circle class="pinnano" cx="435.6" cy="407.4" r="4"/>
+<text class="pinlbl" x="435.6" y="424.4" text-anchor="middle">5V</text>
+<circle class="pinnano" cx="450.9" cy="407.4" r="4"/>
+<text class="pinlbl" x="450.9" y="424.4" text-anchor="middle">RST</text>
+<circle class="pinnano" cx="466.1" cy="407.4" r="4"/>
+<text class="pinlbl" x="466.1" y="424.4" text-anchor="middle">GND</text>
+<circle class="pinnano" cx="481.4" cy="407.4" r="4"/>
+<text class="pinlbl" x="481.4" y="424.4" text-anchor="middle">VIN</text>
+<text class="chiptxt" x="374.7" y="368.9" text-anchor="middle">ARDUINO NANO</text>
+<path class="v5" d="M435.6 407.4 L435.6 538.0"/>
+<path class="gnd" d="M466.1 407.4 L466.1 562.0"/>
+<circle class="cap2" cx="453.6" cy="490.0" r="9.6"/>
+<text class="chico" x="471.6" y="494.8" text-anchor="start">100 nF</text>
+<rect class="modulo" x="616.0" y="304.0" width="180.0" height="198.0" rx="3"/>
+<text class="chiptxt" x="718.0" y="376.0" text-anchor="middle">módulo ULN2003</text>
+<text class="chiptxt peq" x="718.0" y="406.0" text-anchor="middle">(el tuyo, atornillado)</text>
+<text class="chiptxt peq" x="718.0" y="472.0" text-anchor="middle">ficha blanca del motor</text>
+<circle class="tornillo" cx="631.0" cy="319.0" r="6.6"/>
+<circle class="tornillo" cx="781.0" cy="487.0" r="6.6"/>
+<circle class="pin" cx="628.0" cy="340.0" r="4"/>
+<text class="chiptxt peq" x="640.0" y="344.8" text-anchor="start">IN1</text>
+<circle class="pin" cx="628.0" cy="355.2" r="4"/>
+<text class="chiptxt peq" x="640.0" y="360.0" text-anchor="start">IN2</text>
+<circle class="pin" cx="628.0" cy="370.5" r="4"/>
+<text class="chiptxt peq" x="640.0" y="375.3" text-anchor="start">IN3</text>
+<circle class="pin" cx="628.0" cy="385.7" r="4"/>
+<text class="chiptxt peq" x="640.0" y="390.5" text-anchor="start">IN4</text>
+<circle class="pin" cx="628.0" cy="436.0" r="4"/>
+<circle class="pin" cx="628.0" cy="451.2" r="4"/>
+<text class="chiptxt peq" x="640.0" y="440.8" text-anchor="start">+</text>
+<text class="chiptxt peq" x="640.0" y="455.8" text-anchor="start">−</text>
+<path class="paso" d="M329.0 316.0 L329.0 286.0 L598.0 286.0 L598.0 340.0 L628.0 340.0"/>
+<path class="paso" d="M313.7 316.0 L313.7 276.4 L590.8 276.4 L590.8 355.2 L628.0 355.2"/>
+<path class="paso" d="M298.5 316.0 L298.5 266.8 L583.6 266.8 L583.6 370.5 L628.0 370.5"/>
+<path class="paso" d="M283.2 316.0 L283.2 257.2 L576.4 257.2 L576.4 385.7 L628.0 385.7"/>
+<path class="v5" d="M628.0 436.0 L607.0 436.0 L607.0 538.0"/>
+<path class="gnd" d="M628.0 451.2 L613.0 451.2 L613.0 562.0"/>
+<rect class="header" x="269.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="280.0" cy="586.0" r="4"/>
+<circle class="pin" cx="280.0" cy="601.2" r="4"/>
+<circle class="pin" cx="280.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M280.0 601.2 L280.0 538.0"/>
+<path class="gnd fino" d="M280.1 616.5 L287.2 616.5 L287.2 562.0"/>
+<path class="servo" d="M374.7 316.0 L374.7 329.2 L369.9 329.2"/>
+<path class="servo" d="M369.9 329.2 L369.9 454.0 L280.0 454.0 L280.0 586.0"/>
+<text class="pinlbl" x="280.0" y="644.7" text-anchor="middle">D5</text>
+<rect class="header" x="320.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="331.0" cy="586.0" r="4"/>
+<circle class="pin" cx="331.0" cy="601.2" r="4"/>
+<circle class="pin" cx="331.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M331.0 601.2 L331.0 538.0"/>
+<path class="gnd fino" d="M331.1 616.5 L338.2 616.5 L338.2 562.0"/>
+<path class="servo" d="M359.4 316.0 L359.4 329.2 L354.6 329.2"/>
+<path class="servo" d="M354.6 329.2 L354.6 463.0 L331.0 463.0 L331.0 586.0"/>
+<text class="pinlbl" x="331.0" y="644.7" text-anchor="middle">D6</text>
+<rect class="header" x="371.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="382.0" cy="586.0" r="4"/>
+<circle class="pin" cx="382.0" cy="601.2" r="4"/>
+<circle class="pin" cx="382.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M382.0 601.2 L382.0 538.0"/>
+<path class="gnd fino" d="M382.1 616.5 L389.2 616.5 L389.2 562.0"/>
+<path class="servo" d="M344.2 316.0 L344.2 329.2 L339.4 329.2"/>
+<path class="servo" d="M339.4 329.2 L339.4 472.0 L382.0 472.0 L382.0 586.0"/>
+<text class="pinlbl" x="382.0" y="644.7" text-anchor="middle">D7</text>
+<rect class="header" x="422.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="433.0" cy="586.0" r="4"/>
+<circle class="pin" cx="433.0" cy="601.2" r="4"/>
+<circle class="pin" cx="433.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M433.0 601.2 L433.0 538.0"/>
+<path class="gnd fino" d="M433.1 616.5 L440.2 616.5 L440.2 562.0"/>
+<path class="sens" d="M405.2 316.0 L405.2 329.2 L400.4 329.2"/>
+<path class="sens" d="M400.4 329.2 L400.4 481.0 L433.0 481.0 L433.0 586.0"/>
+<text class="pinlbl" x="433.0" y="644.7" text-anchor="middle">D3</text>
+<rect class="header" x="473.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="484.0" cy="586.0" r="4"/>
+<circle class="pin" cx="484.0" cy="601.2" r="4"/>
+<circle class="pin" cx="484.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M484.0 601.2 L484.0 538.0"/>
+<path class="gnd fino" d="M484.1 616.5 L491.2 616.5 L491.2 562.0"/>
+<text class="pinlbl" x="484.0" y="644.7" text-anchor="middle">D2</text>
+<rect class="header" x="524.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="535.0" cy="586.0" r="4"/>
+<circle class="pin" cx="535.0" cy="601.2" r="4"/>
+<circle class="pin" cx="535.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M535.0 601.2 L535.0 538.0"/>
+<path class="gnd fino" d="M535.1 616.5 L542.2 616.5 L542.2 562.0"/>
+<text class="pinlbl" x="535.0" y="644.7" text-anchor="middle">D4</text>
+<rect class="header" x="575.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="586.0" cy="586.0" r="4"/>
+<circle class="pin" cx="586.0" cy="601.2" r="4"/>
+<circle class="pin" cx="586.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M586.0 601.2 L586.0 538.0"/>
+<path class="gnd fino" d="M586.1 616.5 L593.2 616.5 L593.2 562.0"/>
+<text class="pinlbl" x="586.0" y="644.7" text-anchor="middle">D12</text>
+<rect class="header" x="626.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="637.0" cy="586.0" r="4"/>
+<circle class="pin" cx="637.0" cy="601.2" r="4"/>
+<circle class="pin" cx="637.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M637.0 601.2 L637.0 538.0"/>
+<path class="gnd fino" d="M637.1 616.5 L644.2 616.5 L644.2 562.0"/>
+<text class="pinlbl" x="637.0" y="644.7" text-anchor="middle">D13</text>
+<rect class="header" x="677.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="688.0" cy="586.0" r="4"/>
+<circle class="pin" cx="688.0" cy="601.2" r="4"/>
+<circle class="pin" cx="688.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M688.0 601.2 L688.0 538.0"/>
+<path class="gnd fino" d="M688.1 616.5 L695.2 616.5 L695.2 562.0"/>
+<text class="pinlbl" x="688.0" y="644.7" text-anchor="middle">A0</text>
+<rect class="header" x="728.2" y="576.4" width="21.6" height="56.5" rx="2"/>
+<circle class="pin" cx="739.0" cy="586.0" r="4"/>
+<circle class="pin" cx="739.0" cy="601.2" r="4"/>
+<circle class="pin" cx="739.0" cy="616.5" r="4"/>
+<path class="v5 fino" d="M739.0 601.2 L739.0 538.0"/>
+<path class="gnd fino" d="M739.1 616.5 L746.2 616.5 L746.2 562.0"/>
+<text class="pinlbl" x="739.0" y="644.7" text-anchor="middle">A1</text>
+<text class="chico" x="250.0" y="589.6" text-anchor="end">S</text>
+<text class="chico" x="250.0" y="604.8" text-anchor="end">V</text>
+<text class="chico" x="250.0" y="620.1" text-anchor="end">G</text>
+<rect class="ext" x="15" y="60" width="165" height="62" rx="8"/>
+<text x="97.5" y="87.0" text-anchor="middle" class="fuerte">Batería 7,4 V</text>
+<text x="97.5" y="105.0" text-anchor="middle" class="chico">18650 2S con BMS</text>
+<rect class="ext" x="15" y="170" width="165" height="50" rx="8"/>
+<text x="97.5" y="191.0" text-anchor="middle" class="fuerte">Interruptor</text>
+<text x="97.5" y="209.0" text-anchor="middle" class="chico">MTS-102 (en la caja)</text>
+<path class="bat" d="M180.0 80.0 L192.0 80.0 L192.0 183.0 L180.0 183.0"/>
+<path class="bat" d="M180.0 207.0 L210.0 207.0 L210.0 100.0 L259.0 100.0"/>
+<path class="gnd" d="M180.0 104.0 L200.0 104.0 L200.0 130.0 L259.0 130.0"/>
+<text class="chico" x="30.0" y="140.0" text-anchor="start">rojo (+) por el interruptor</text>
+<text class="chico" x="30.0" y="155.0" text-anchor="start">negro (−) directo a la bornera</text>
+<rect class="ext" x="860.0" y="330" width="175" height="50" rx="8"/>
+<text x="947.5" y="351.0" text-anchor="middle" class="fuerte">Motor 28BYJ-48</text>
+<text x="947.5" y="369.0" text-anchor="middle" class="chico">enchufado en su módulo</text>
+<rect class="ext" x="860.0" y="420" width="175" height="46" rx="8"/>
+<text x="947.5" y="439.0" text-anchor="middle" class="fuerte">3 servos MG90S</text>
+<text x="947.5" y="457.0" text-anchor="middle" class="chico">base · brazo · pinza</text>
+<rect class="ext sensor" x="860.0" y="490" width="175" height="54" rx="8"/>
+<text x="947.5" y="513.0" text-anchor="middle" class="fuerte">KY-033 infrarrojo</text>
+<text x="947.5" y="531.0" text-anchor="middle" class="chico">en la cuna: VCC · GND · DO</text>
+<path class="paso" d="M796.0 400.0 L848.0 400.0 L848.0 355.0 L860.0 355.0"/>
+<path class="servo" d="M334.0 636.5 L334.0 652.5 L836.0 652.5 L836.0 443.0 L860.0 443.0"/>
+<path class="sens" d="M433.0 636.5 L433.0 662.5 L824.0 662.5 L824.0 517.0 L860.0 517.0"/></svg>
+    <div class="ley">
+      <span><i style="background:var(--v5)"></i>5 V</span><span><i style="background:var(--gnd)"></i>GND</span>
+      <span><i style="background:var(--bat)"></i>batería (7,4 V, antes del regulador)</span>
+      <span><i style="background:var(--paso)"></i>motor</span><span><i style="background:var(--servo)"></i>servos</span>
+      <span><i style="background:var(--sens)"></i>sensor infrarrojo</span>
+    </div>
+    <p class="nota">El orden de los pines del Nano del dibujo es el más común, pero cambia entre fabricantes: guiate siempre por lo que dice impreso al lado de cada pin de tu Nano.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="box tbl">
+      <h2>Qué va en cada pin</h2>
+      <table>
+        <thead><tr><th>Pin del Nano</th><th>Va a</th><th>Cable</th></tr></thead>
+        <tbody>
+          <tr class="ir"><td class="m">D3</td><td><b>KY-033 (infrarrojo)</b>, su pin DO o S</td><td>El KY-033 tiene 3 pines: VCC al V del conector, GND al G y DO a la S</td></tr>
+          <tr><td class="m">D5</td><td>Servo de la base, señal</td><td>Naranja = S, rojo = V, marrón = G</td></tr>
+          <tr><td class="m">D6</td><td>Servo del brazo, señal</td><td>Igual</td></tr>
+          <tr><td class="m">D7</td><td>Servo de la pinza, señal</td><td>Igual</td></tr>
+          <tr><td class="m">D8 · D9 · D10 · D11</td><td>IN1 · IN2 · IN3 · IN4 del módulo ULN2003</td><td>4 cables cortos sobre la placa</td></tr>
+          <tr><td class="m">5V</td><td>Riel de 5 V</td><td>Al <b>5V</b>, nunca al VIN ni al 3V3</td></tr>
+          <tr><td class="m">GND</td><td>Riel de GND</td><td>—</td></tr>
+          <tr><td>Módulo ULN2003 + y −</td><td>Riel de 5 V y riel de GND</td><td>Dejá puesto su puentecito de plástico</td></tr>
+          <tr><td>LM2596 OUT+ / OUT−</td><td>Riel de 5 V / riel de GND</td><td>De acá sale la energía de todo</td></tr>
+          <tr><td>LM2596 IN+ / IN−</td><td>Bornera BAT + / −</td><td>Llega la batería, pasando por el interruptor</td></tr>
+          <tr><td class="m">D2 D4 D12 D13 A0 A1</td><td>Conectores libres</td><td>Para lo que agregues</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="box">
+      <h2>Orden para soldar</h2>
+      <ol>
+        <li><b>Rieles.</b> Dos líneas de 5 V (rojo) y dos de GND (negro) con cable de cobre pelado o una línea de estaño, y las uniones de los costados.</li>
+        <li><b>Bornera BAT</b> y el <b>LM2596</b>: sus 4 patas soldadas o con cables cortos. Conectá la batería y medí con el tester: el riel de 5 V tiene que dar <b>entre 4,9 y 5,1 V</b>. Recién ahí seguís.</li>
+        <li><b>Capacitores</b>: el de 1000 µF entre los rieles de arriba (la franja blanca va a GND) y el de 100 nF al lado del 5V del Nano.</li>
+        <li><b>Tiras hembra para el Nano</b> (2 de 15). Soldalas con el Nano enchufado, así quedan derechas.</li>
+        <li><b>Conectores de 3 pines</b> (tira macho cortada de a 3): las filas V al riel de 5 V, las G al de GND, y cada S a su pin del Nano.</li>
+        <li><b>Módulo ULN2003</b>: atornillado con 2 M2×8 y una tuerca de separador debajo. 4 cables de IN1–IN4 a D8–D11, y + y − a los rieles.</li>
+        <li><b>Revisá todo con el tester</b> antes de enchufar nada: que no haya contacto entre 5 V y GND.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h2>Primera prueba, de a una cosa</h2>
+      <ol>
+        <li>Sin el Nano: batería y medir 5 V en los rieles.</li>
+        <li>Con el Nano y el USB a la compu (interruptor apagado): cargar <code>cinta_brazo_cuna</code>.</li>
+        <li>Desenchufar el USB y prender el interruptor. Mandar <code>k</code> por el monitor serie con la mano frente al <b>KY-033</b>: tiene que decir "VE CAJA". Si no, girá su potenciómetro.</li>
+        <li>Motor: <code>p</code> para que la cinta ande o pare.</li>
+        <li>Servos de a uno, con <code>c</code> (todos a 90°).</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h2>Lo que sale de la caja</h2>
+      <ol>
+        <li><b>Batería</b>: rojo por el interruptor a la bornera BAT +, negro directo a BAT −.</li>
+        <li><b>3 servos</b>: con los cables macho-hembra si no llegan.</li>
+        <li><b>KY-033</b>: 3 cables macho-hembra desde la cuna (unos 11 cm).</li>
+        <li><b>Motor</b>: no sale nada nuevo; queda enchufado en su módulo, adentro de la caja.</li>
+        <li><b>USB del Nano</b>: por el agujero de la caja, para cargarle programas.</li>
+      </ol>
+      <p class="nota">¿Tenés una placa de expansión con pines? Cuando llegue todo la miramos: si es una "Nano I/O shield", puede reemplazar los conectores de 3 pines y te ahorra soldar esa parte.</p>
+    </div>
+  </div>
+</div>
+
+</body></html>

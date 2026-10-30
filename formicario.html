@@ -1,0 +1,680 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}.volver-taller{display:block;padding:10px max(16px,env(safe-area-inset-left,0px)) 0;font:500 13px/1.2 system-ui,sans-serif}.volver-taller a{color:var(--fg,CanvasText);text-decoration:none;opacity:.8}.volver-taller a:hover{opacity:1;text-decoration:underline}</style></head><body><nav class="volver-taller"><a href="./" onclick="if(history.length>1){history.back();return false}">&larr; Todos los proyectos</a></nav>
+<meta charset="utf-8">
+<title>Formicario Camponotus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: visor 3D a todo lo alto + panel lateral de controles y medidas; en móvil el panel baja debajo del visor.
+   Un solo tema oscuro a propósito: así se observan las Camponotus, de noche y con luz roja. */
+:root{
+  --bg:#15110e;
+  --panel:#1c1713;
+  --line:#352b23;
+  --fg:#f0e7dc;
+  --muted:#a7978a;
+  --accent:#e4543c;   /* luz roja de observación */
+  --accent-ink:#1a0d09;
+  --ok:#86b98f;
+  --bad:#e7a33c;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 370px;height:100%}
+.stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--bg)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:12px;margin:0;font:400 11px/1.4 var(--mono);color:var(--muted);letter-spacing:.02em;pointer-events:none}
+.err{position:absolute;inset:auto 16px 16px 16px;background:#3a1a12;color:var(--fg);padding:12px 14px;border-radius:6px;font-size:13px}
+#labels{position:absolute;inset:0;pointer-events:none}
+.lbl{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:500 10.5px/1 var(--mono);letter-spacing:.03em;color:var(--fg);background:rgba(21,17,14,.8);border:1px solid rgba(228,84,60,.45);padding:4px 6px;border-radius:3px}
+.lbl.wet{border-color:rgba(111,168,200,.75)}
+.lbl::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:8px;background:rgba(228,84,60,.6)}
+.panel{overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding-block:22px 28px;padding-left:22px;padding-right:max(22px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:26px;min-width:0}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;letter-spacing:-.01em;margin:0 0 10px;text-wrap:balance}
+h2{font:600 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.lede{margin:0;opacity:.86;max-width:60ch}
+section{min-width:0}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.tg,.vw{font:500 12.5px/1 var(--body);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer}
+.tg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tg:hover,.vw:hover{border-color:var(--accent)}
+.tg:focus-visible,.vw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}
+.vw{border-radius:4px;text-align:left;padding:9px 10px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:7px 6px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.n{font-family:var(--mono);color:var(--muted);width:1.6em}
+td.m{font-family:var(--mono);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{color:var(--muted);font-size:11.5px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.checks li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.pill{font:600 10px/1 var(--mono);letter-spacing:.06em;padding:4px 6px;border-radius:3px;margin-top:2px}
+.pill.ok{background:rgba(134,185,143,.16);color:var(--ok)}
+.pill.bad{background:rgba(231,163,60,.16);color:var(--bad)}
+.checks .v{font-family:var(--mono);font-size:12px}
+.sub{color:var(--muted);font-size:12px}
+.foot{color:var(--muted);font-size:12px;margin:0;max-width:60ch}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+.grad{height:8px;border-radius:2px;background:linear-gradient(90deg,#3a2a1e,#6b4c34 45%,#b08e6a);margin:4px 0 10px}
+.gradlbl{display:flex;justify-content:space-between;font:500 10.5px/1 var(--mono);color:var(--muted);letter-spacing:.04em}
+@media (max-width:820px){
+  html,body{height:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  .panel{border-left:0;border-top:1px solid var(--line);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  h1{font-size:26px}
+}
+</style>
+
+<div class="app">
+  <div class="stage" id="stage">
+    <div id="labels"></div>
+    <p class="hint">Arrastrá para girar · rueda o pellizco para acercar · clic derecho para mover</p>
+    <p class="err" id="err" hidden></p>
+  </div>
+  <aside class="panel">
+    <header>
+      <p class="eyebrow">Una sola pieza · Camponotus · 210 × 210 mm</p>
+      <h1>Formicario Camponotus</h1>
+      <p class="lede">Nido y área de forrajeo impresos juntos, ya conectados por dentro. Tiene ranuras para las mallas, huecos para imanes de 6 × 2 mm y una tapa de humedad aparte que se levanta sin abrir el nido.</p>
+    </header>
+
+    <section>
+      <h2>Ver</h2>
+      <div class="toggles">
+        <button class="tg" id="t-acr" data-t="acr" aria-pressed="true">Tapas de acrílico</button>
+        <button class="tg" id="t-hatch" data-t="hatch" aria-pressed="false">Levantar tapa de humedad</button>
+        <button class="tg" id="t-cover" data-t="cover" aria-pressed="false">Tapa oscura</button>
+        <button class="tg" id="t-owlid" data-t="owlid" aria-pressed="true">Tapa del forrajeo</button>
+        <button class="tg" id="t-lbl" data-t="lbl" aria-pressed="true">Nombres</button>
+        <button class="tg" id="t-ants" data-t="ants" aria-pressed="true">Hormigas</button>
+        <button class="tg" id="t-explode" data-t="explode" aria-pressed="false">Despiece</button>
+        <button class="tg" id="t-print" data-t="print" aria-pressed="false">Ver como impreso</button>
+        <button class="tg" id="t-red" data-t="red" aria-pressed="false">Luz roja</button>
+      </div>
+      <div class="views">
+        <button class="vw" id="v-top" data-v="top">Desde arriba</button>
+        <button class="vw" id="v-34" data-v="persp">Tres cuartos</button>
+        <button class="vw" id="v-hum" data-v="hum">Humedad</button>
+        <button class="vw" id="v-queen" data-v="queen">Primer plano: reina</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Humedad</h2>
+      <div class="gradlbl"><span>reservorio · húmedo</span><span>forrajeo · seco</span></div>
+      <div class="grad" role="img" aria-label="Gradiente de humedad de izquierda a derecha"></div>
+      <ol class="steps">
+        <li>El reservorio de la izquierda tiene su propia tapa de acrílico, sostenida con imanes. Se levanta con la muesca del costado y el nido sigue cerrado.</li>
+        <li>Adentro va lo que quieras: algodón, esponja o un taco de yeso. Se moja o se cambia cada vez que haga falta.</li>
+        <li>Una malla metida en la ranura de 2,2 mm separa el reservorio del nido. Las hormigas no llegan al agua y la humedad pasa.</li>
+        <li>Tres aberturas detrás de la malla llevan la humedad a la cámara húmeda, a la de la reina y a la de los huevos. Hacia el forrajeo el nido queda seco para los capullos.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Medidas</h2>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Pieza</th><th>Medida</th><th>Cómo</th></tr></thead>
+        <tbody id="parts"></tbody>
+      </table>
+      </div>
+      <p class="foot" id="fp" style="margin-top:10px"></p>
+    </section>
+
+    <section>
+      <h2>Pensado para Camponotus</h2>
+      <dl>
+        <dt>Ancho de túnel</dt><dd>10 mm</dd>
+        <dt>Alto interior</dt><dd>11 mm</dd>
+        <dt>Cámaras</dt><dd>26–40 × 16–26 mm</dd>
+        <dt>Paso al forrajeo</dt><dd>10 × 11 mm, impreso</dd>
+        <dt>Imanes</dt><dd id="magDd">Ø6 × 2 mm</dd>
+      </dl>
+    </section>
+
+    <section>
+      <h2>Controles medidos sobre el modelo</h2>
+      <ul class="checks" id="checks"><li><span class="pill bad">…</span><span>Calculando</span></li></ul>
+    </section>
+
+    <p class="foot">El color de la tierra muestra dónde llega la humedad: es ilustrativo. La pieza se imprime en un solo filamento. Tocá «Ver como impreso» para verla así.</p>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  if (!window.THREE || !THREE.OrbitControls || !window.ClipperLib) {
+    const e = $('#err'); e.hidden = false;
+    e.textContent = 'No cargaron las librerías 3D (three.js / clipper). Recargá la página; si sigue, revisá la conexión.';
+    return;
+  }
+
+  // ---------- Parámetros (mm). Planta: x a la derecha, y hacia el fondo, z hacia arriba ----------
+  const P = {
+    W: 210, Dn: 128, Dt: 210,        // ancho, fondo del nido, fondo total (nido + forrajeo)
+    base: 4, depth: 11, acr: 3, cover: 2, tw: 10, wall: 6, rCorner: 6, edgeMin: 12,
+    owH: 60, owT: 3,                 // alto y espesor de paredes del forrajeo
+    res: [11, 12, 21, 116],          // cavidad del reservorio x0, y0, x1, y1
+    rim: 25,                         // fin del murito del reservorio (x)
+    groove: 2.2, sheet: 2, gy0: 7, gy1: 121,
+    hatchX: 23,                      // corte entre tapa de humedad y tapa del nido
+    magD: 6, magH: 2, magClr: 0.2,   // imán de neodimio 6 × 2 mm
+    port: [180, 190],                // paso al forrajeo (x)
+  };
+  P.T = P.base + P.depth;
+  P.gx0 = P.rim; P.gx1 = P.rim + P.groove;
+  P.magR = (P.magD + P.magClr) / 2;
+  const S = 100, CL = ClipperLib;
+
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const rnd = mulberry32(20261028);
+
+  const CH = [
+    { id: 'H', x: 55, y: 98, w: 32, h: 20, name: 'Cámara húmeda', wet: true },
+    { id: 'Q', x: 55, y: 58, w: 40, h: 26, name: 'Reina', wet: true },
+    { id: 'E', x: 55, y: 22, w: 32, h: 16, name: 'Huevos', wet: true },
+    { id: 'L', x: 102, y: 92, w: 32, h: 22, name: 'Larvas' },
+    { id: 'C', x: 105, y: 34, w: 34, h: 20, name: 'Capullos' },
+    { id: 'D', x: 135, y: 62, w: 26, h: 18, name: 'Mayores' },
+    { id: 'K', x: 150, y: 100, w: 30, h: 18, name: 'Obreras' },
+    { id: 'M', x: 175, y: 64, w: 28, h: 20, name: 'Entrada' },
+    { id: 'B', x: 160, y: 22, w: 28, h: 16, name: 'Basurero' },
+  ];
+  const chById = Object.fromEntries(CH.map((c) => [c.id, c]));
+  const anchorX = [(P.port[0] + P.port[1]) / 2, 121];
+  const anchor = (id) => id === 'X' ? anchorX : [chById[id].x, chById[id].y];
+  const TUN = [['Q', 'H'], ['Q', 'E'], ['Q', 'L'], ['Q', 'C'], ['H', 'L'], ['L', 'K'], ['L', 'D'], ['C', 'D'], ['C', 'B'], ['D', 'M'], ['K', 'M'], ['K', 'X']];
+  const WINDOWS = [{ id: 'H', y0: 92, y1: 104, x1: 41 }, { id: 'Q', y0: 52, y1: 64, x1: 37 }, { id: 'E', y0: 17, y1: 27, x1: 41 }];
+  // huecos para imanes: tapa del nido, tapa de humedad y tapa del forrajeo
+  const MAG_NEST = [[60, 5.5], [120, 5.5], [180, 5.5], [204.5, 40], [204.5, 95], [60, 122.5], [120, 122.5]];
+  const MAG_HATCH = [[5, 40], [5, 90], [16, 5.5], [16, 122.5]];
+  const MAG_OW = [[P.owT + 4.5, P.Dn + P.owT + 4.5], [P.W - P.owT - 4.5, P.Dn + P.owT + 4.5], [P.owT + 4.5, P.Dt - P.owT - 4.5], [P.W - P.owT - 4.5, P.Dt - P.owT - 4.5]];
+
+  // ---------- Geometría 2D ----------
+  const toC = (pts) => pts.map((p) => ({ X: Math.round(p[0] * S), Y: Math.round(p[1] * S) }));
+  const fromC = (path) => path.map((p) => [p.X / S, p.Y / S]);
+  function offOpen(pts, d) { const co = new CL.ClipperOffset(2, 0.12 * S); co.AddPath(toC(pts), CL.JoinType.jtRound, CL.EndType.etOpenRound); const out = []; co.Execute(out, d * S); return out; }
+  function offClosed(paths, d) { const co = new CL.ClipperOffset(2, 0.12 * S); co.AddPaths(paths, CL.JoinType.jtRound, CL.EndType.etClosedPolygon); const out = []; co.Execute(out, d * S); return out; }
+  function clip(subj, clipP, type, tree) {
+    const c = new CL.Clipper(); c.AddPaths(subj, CL.PolyType.ptSubject, true);
+    if (clipP) c.AddPaths(clipP, CL.PolyType.ptClip, true);
+    const out = tree ? new CL.PolyTree() : [];
+    c.Execute(type, out, CL.PolyFillType.pftNonZero, CL.PolyFillType.pftNonZero); return out;
+  }
+  const union = (paths) => clip(paths, null, CL.ClipType.ctUnion);
+  const rectPath = (x0, y0, x1, y1) => toC([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+  const roundRect = (x0, y0, x1, y1, r) => offClosed([rectPath(x0 + r, y0 + r, x1 - r, y1 - r)], r);
+
+  function chamberBlob(c, seed) {
+    const r = mulberry32(seed), f1 = r() * 6, f2 = r() * 6, pts = [];
+    for (let i = 0; i < 64; i++) {
+      const t = (i / 64) * Math.PI * 2, n = 0.6 * Math.sin(3 * t + f1) + 0.4 * Math.sin(5 * t + f2);
+      pts.push([c.x + (c.w / 2) * Math.cos(t) * (1 + 0.07 * n), c.y + (c.h / 2) * Math.sin(t) * (1 + 0.07 * n)]);
+    }
+    return toC(pts);
+  }
+  function tunnelLine(a, b, seed) {
+    const r = mulberry32(seed), dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+    const k = Math.max(2, Math.round(L / 18)), pts = [new THREE.Vector3(a[0], a[1], 0)];
+    for (let i = 1; i < k; i++) { const t = i / k, off = (r() * 2 - 1) * Math.min(5, L * 0.08); pts.push(new THREE.Vector3(a[0] + dx * t + nx * off, a[1] + dy * t + ny * off, 0)); }
+    pts.push(new THREE.Vector3(b[0], b[1], 0));
+    return new THREE.CatmullRomCurve3(pts, false, 'centripetal').getSpacedPoints(Math.max(4, Math.ceil(L / 2.5)));
+  }
+
+  const feats = [];
+  CH.forEach((c, i) => feats.push({ id: c.id, nodes: [c.id], paths: [chamberBlob(c, 101 + i * 7)], edge: true }));
+  const tunnels = TUN.map(([a, b], i) => {
+    const line = tunnelLine(anchor(a), anchor(b), 300 + i * 13), r = mulberry32(900 + i);
+    let paths = [];
+    for (let j = 0; j < line.length - 1; j += 3) {
+      const seg = line.slice(j, Math.min(line.length, j + 4)).map((v) => [v.x, v.y]);
+      if (seg.length > 1) paths = paths.concat(offOpen(seg, (P.tw / 2) * (1 + 0.22 * r())));
+    }
+    feats.push({ id: a + '-' + b, nodes: [a, b], paths: union(paths), edge: b !== 'X' });
+    return { a, b, line };
+  });
+  const [rx0, ry0, rx1, ry1] = P.res;
+  feats.push({ id: 'R', nodes: ['R'], paths: roundRect(rx0, ry0, rx1, ry1, 2.5), edge: false });
+  feats.push({ id: 'G', nodes: ['R'], paths: [rectPath(P.gx0, P.gy0, P.gx1, P.gy1)], edge: false });
+  WINDOWS.forEach((w) => feats.push({ id: 'W' + w.id, nodes: ['R', w.id], paths: [rectPath(rx1 - 0.5, w.y0, w.x1, w.y1)], edge: false }));
+  feats.push({ id: 'PS', nodes: ['X', 'K'], paths: [rectPath(P.port[0], 114, P.port[1], P.Dn + 1)], edge: false });
+
+  let U = union(feats.flatMap((f) => f.paths));
+  U = offClosed(offClosed(U, 2.5), -2.5);
+  const nestOutline = clip(clip(roundRect(0, 0, P.W, P.Dn + 20, P.rCorner), [rectPath(0, 0, P.W, P.Dn)], CL.ClipType.ctIntersection), [rectPath(-1, 56, 3.5, 72)], CL.ClipType.ctDifference); // con muesca para levantar
+  const wallsEx = CL.JS.PolyTreeToExPolygons(clip(nestOutline, U, CL.ClipType.ctDifference, true));
+
+  // ---------- Controles medidos ----------
+  function segDist(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy; let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(ax + t * dx - px, ay + t * dy - py); }
+  function inPoly(px, py, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > py) !== (b[1] > py) && px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
+  function vToPolys(P1, P2) { let m = Infinity; for (const a of P1) for (const b of P2) for (const p of a) { if (inPoly(p[0], p[1], b)) return 0; for (let i = 0, j = b.length - 1; i < b.length; j = i++) { const d = segDist(p[0], p[1], b[j][0], b[j][1], b[i][0], b[i][1]); if (d < m) m = d; } } return m; }
+  const bbox = (polys) => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; polys.forEach((p) => p.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); })); return [x0, y0, x1, y1]; };
+  feats.forEach((f) => { f.polys = f.paths.map(fromC); f.bb = bbox(f.polys); });
+  let minWall = Infinity, minWallPair = '';
+  for (let i = 0; i < feats.length; i++) for (let j = i + 1; j < feats.length; j++) {
+    const a = feats[i], b = feats[j];
+    if (a.nodes.some((n) => b.nodes.includes(n))) continue;
+    const gx = Math.max(0, a.bb[0] - b.bb[2], b.bb[0] - a.bb[2]), gy = Math.max(0, a.bb[1] - b.bb[3], b.bb[1] - a.bb[3]);
+    if (Math.hypot(gx, gy) > 14) continue;
+    const d = Math.min(vToPolys(a.polys, b.polys), vToPolys(b.polys, a.polys));
+    if (d < minWall) { minWall = d; minWallPair = a.id + ' / ' + b.id; }
+  }
+  let minEdge = Infinity;
+  feats.filter((f) => f.edge).forEach((f) => f.polys.forEach((p) => p.forEach(([x, y]) => { minEdge = Math.min(minEdge, x, P.W - x, y, P.Dn - y); })));
+  let minMag = Infinity, minMagOut = Infinity;
+  const allPolys = feats.flatMap((f) => f.polys);
+  MAG_NEST.concat(MAG_HATCH).forEach(([sx, sy]) => {
+    minMagOut = Math.min(minMagOut, sx - P.magR, P.W - sx - P.magR, sy - P.magR, P.Dn - sy - P.magR);
+    allPolys.forEach((p) => {
+      if (inPoly(sx, sy, p)) minMag = -1;
+      for (let i = 0, j = p.length - 1; i < p.length; j = i++) minMag = Math.min(minMag, segDist(sx, sy, p[j][0], p[j][1], p[i][0], p[i][1]) - P.magR);
+    });
+  });
+
+  // ---------- Escena: la pieza se acuesta, local (x, y, z) -> mundo (x, z, -y) ----------
+  const NW = (x, y, z) => new THREE.Vector3(x, z, -y);
+  const stage = $('#stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  const BG = new THREE.Color(0x15110e), BG_RED = new THREE.Color(0x0c0605);
+  scene.background = BG;
+  const camera = new THREE.PerspectiveCamera(38, 1, 1, 4000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08; controls.minDistance = 30; controls.maxDistance = 1400;
+  controls.maxPolarAngle = Math.PI * 0.49;
+
+  const amb = new THREE.AmbientLight(0xffffff, 0.25); scene.add(amb);
+  const hemi = new THREE.HemisphereLight(0xfff0dc, 0x3a2a20, 0.55); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffe7c8, 0.95);
+  sun.position.set(-40, 420, 160); sun.target.position.set(105, 0, -105);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -220, right: 220, top: 220, bottom: -220, near: 50, far: 1200 });
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.3;
+  scene.add(sun, sun.target);
+  const fill = new THREE.DirectionalLight(0xc9d6ff, 0.25); fill.position.set(300, 160, 300); scene.add(fill);
+  const groundMesh = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.MeshStandardMaterial({ color: 0x211a15, roughness: 1 }));
+  groundMesh.rotation.x = -Math.PI / 2; groundMesh.position.y = -0.05; groundMesh.receiveShadow = true; scene.add(groundMesh);
+
+  function soilTexture() {
+    const k = 4, cw = P.W * k, chh = P.Dn * k;
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = chh;
+    const g = cv.getContext('2d'), r = mulberry32(77);
+    const grad = g.createLinearGradient(0, 0, cw, 0);
+    grad.addColorStop(0, '#2f2219'); grad.addColorStop(0.2, '#3a2a1e'); grad.addColorStop(0.5, '#6b4c34'); grad.addColorStop(1, '#b08e6a');
+    g.fillStyle = grad; g.fillRect(0, 0, cw, chh);
+    for (let i = 0; i < 32000; i++) { g.fillStyle = r() < 0.5 ? 'rgba(0,0,0,' + (0.08 + r() * 0.14) + ')' : 'rgba(255,236,210,' + (0.04 + r() * 0.08) + ')'; g.fillRect(r() * cw, r() * chh, 1 + r() * 2, 1 + r() * 2); }
+    for (let i = 0; i < 170; i++) { const x = r() * cw, y = r() * chh, s = (0.6 + r() * 1.8) * k, dry = x / cw; g.fillStyle = `hsl(${24 + dry * 8},${14 + r() * 14}%,${22 + dry * 26 + r() * 10}%)`; g.beginPath(); g.ellipse(x, y, s, s * (0.55 + r() * 0.35), r() * 3, 0, 7); g.fill(); }
+    for (let i = 0; i < 900; i++) { const x = r() * cw * 0.35; g.fillStyle = 'rgba(160,200,220,' + (0.05 * (1 - x / (cw * 0.35))) + ')'; g.fillRect(x, r() * chh, 2, 2); }
+    const t = new THREE.CanvasTexture(cv);
+    t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / P.W, 1 / P.Dn);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const soil = soilTexture();
+  const FIL = 0x5e3d2a;
+  const mats = {
+    walls: new THREE.MeshStandardMaterial({ map: soil, roughness: 0.92 }),
+    floor: new THREE.MeshStandardMaterial({ map: soil, color: 0x8c7b6c, roughness: 1 }),
+    side: new THREE.MeshStandardMaterial({ color: 0x3b2a20, roughness: 0.95 }),
+    plastic: new THREE.MeshStandardMaterial({ color: FIL, roughness: 0.6 }),
+    acr: new THREE.MeshStandardMaterial({ color: 0xdfeaf0, transparent: true, opacity: 0.08, roughness: 0.05, depthWrite: false }),
+    hatch: new THREE.MeshStandardMaterial({ color: 0xcfe6f2, transparent: true, opacity: 0.16, roughness: 0.05, depthWrite: false }),
+    glass: new THREE.MeshStandardMaterial({ color: 0xe6f2f5, transparent: true, opacity: 0.3, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide }),
+    water: new THREE.MeshStandardMaterial({ color: 0x6fa8c8, transparent: true, opacity: 0.5, roughness: 0.1 }),
+    cotton: new THREE.MeshStandardMaterial({ color: 0xe9eef0, roughness: 1 }),
+    magnet: new THREE.MeshStandardMaterial({ color: 0xc7cacd, metalness: 0.85, roughness: 0.3 }),
+    mesh: new THREE.MeshStandardMaterial({ color: 0xa4aaae, metalness: 0.6, roughness: 0.45, transparent: true, opacity: 0.8 }),
+    cover: new THREE.MeshStandardMaterial({ color: 0x2b0f0b, roughness: 0.7, transparent: true, opacity: 0.93 }),
+    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }),
+    ptfe: new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 0.2, depthWrite: false, side: THREE.DoubleSide }),
+    lid: new THREE.MeshStandardMaterial({ color: FIL, transparent: true, opacity: 0.55, roughness: 0.6, depthWrite: false }),
+  };
+  const exToShapes = (ex) => ex.map((e) => {
+    const s = new THREE.Shape(e.outer.map((p) => new THREE.Vector2(p.X / S, p.Y / S)));
+    e.holes.forEach((h) => s.holes.push(new THREE.Path(h.map((p) => new THREE.Vector2(p.X / S, p.Y / S)))));
+    return s;
+  });
+  const shapesOf = (paths) => exToShapes(CL.JS.PolyTreeToExPolygons(clip(paths, null, CL.ClipType.ctUnion, true)));
+
+  const body = new THREE.Group(); body.rotation.x = -Math.PI / 2; scene.add(body);
+  const basePaths = clip(roundRect(0, 0, P.W, P.Dt, P.rCorner), [rectPath(-1, 56, 3.5, 72)], CL.ClipType.ctDifference);
+  const basePlate = new THREE.Mesh(new THREE.ExtrudeGeometry(shapesOf(basePaths), { depth: P.base, bevelEnabled: false }), [mats.floor, mats.side]);
+  basePlate.receiveShadow = true; basePlate.castShadow = true; body.add(basePlate);
+  const walls = new THREE.Mesh(new THREE.ExtrudeGeometry(exToShapes(wallsEx), { depth: P.depth, bevelEnabled: false }), [mats.walls, mats.side]);
+  walls.position.z = P.base; walls.castShadow = true; walls.receiveShadow = true; body.add(walls);
+
+  const cyl = new THREE.CylinderGeometry(1, 1, 1, 24), sph = new THREE.SphereGeometry(1, 16, 12);
+  function addCyl(parent, mat, r, len, pos, axis) {
+    const m = new THREE.Mesh(cyl, mat); m.scale.set(r, len, r); m.position.copy(pos);
+    if (axis === 'x') m.rotation.z = Math.PI / 2; if (axis === 'z') m.rotation.x = Math.PI / 2;
+    m.castShadow = true; parent.add(m); return m;
+  }
+  const box = (parent, mat, x0, y0, z0, x1, y1, z1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat); m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
+  const zMid = P.base + P.depth / 2;
+  const magnetsAt = (parent, list, zTop) => list.forEach(([x, y]) => addCyl(parent, mats.magnet, P.magD / 2, 0.6, new THREE.Vector3(x, y, zTop - 0.25), 'z'));
+
+  // ---------- Forrajeo, impreso junto al nido ----------
+  const OY0 = P.Dn, OY1 = P.Dt, OT = P.owT;
+  const owWalls = new THREE.Group(); body.add(owWalls);
+  {
+    // pared delantera con el paso al forrajeo abierto abajo
+    const s = new THREE.Shape([[0, 0], [P.W, 0], [P.W, P.owH], [0, P.owH]].map(([u, v]) => new THREE.Vector2(u, v)));
+    const h = new THREE.Path([[P.port[0], P.base], [P.port[0], P.base + P.depth], [P.port[1], P.base + P.depth], [P.port[1], P.base]].map(([u, v]) => new THREE.Vector2(u, v)));
+    s.holes.push(h);
+    const fw = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: OT, bevelEnabled: false }), mats.plastic);
+    fw.rotation.x = Math.PI / 2; fw.position.y = OY0 + OT; fw.castShadow = true; fw.receiveShadow = true; owWalls.add(fw);
+    box(owWalls, mats.plastic, 0, OY0 + OT, 0, OT, OY1, P.owH);
+    box(owWalls, mats.plastic, P.W - OT, OY0 + OT, 0, P.W, OY1, P.owH);
+    // pared del fondo transparente en el visor para ver adentro (impresa igual que las otras)
+    const back = box(owWalls, mats.acr, OT, OY1 - OT, 0, P.W - OT, OY1, P.owH); back.castShadow = false;
+    // esquineros con hueco de imán para la tapa del forrajeo
+    MAG_OW.forEach(([x, y]) => box(owWalls, mats.plastic, x - 4.5, y - 4.5, P.base, x + 4.5, y + 4.5, P.owH));
+    magnetsAt(owWalls, MAG_OW, P.owH);
+    // piso texturado, banda antiescape, comida y bebedero
+    const sandTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = mulberry32(9); g.fillStyle = '#b8966a'; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 9000; i++) { g.fillStyle = r() < 0.5 ? 'rgba(80,55,30,.2)' : 'rgba(255,240,210,.22)'; g.fillRect(r() * 256, r() * 256, 1 + r() * 1.5, 1 + r() * 1.5); } const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 1.3); return t; })();
+    mats.sand.map = sandTex;
+    const sand = box(owWalls, mats.sand, OT, OY0 + OT, P.base, P.W - OT, OY1 - OT, P.base + 0.1); sand.castShadow = false;
+    const bz = P.owH - 11;
+    [[OT + 0.1, OY0 + OT + 0.1, P.W - OT - 0.1, OY0 + OT + 0.3], [OT + 0.1, OY1 - OT - 0.3, P.W - OT - 0.1, OY1 - OT - 0.1], [OT + 0.1, OY0 + OT, OT + 0.3, OY1 - OT], [P.W - OT - 0.3, OY0 + OT, P.W - OT - 0.1, OY1 - OT]]
+      .forEach(([x0, y0, x1, y1]) => { box(owWalls, mats.ptfe, x0, y0, bz - 9, x1, y1, bz + 9).castShadow = false; });
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(13, 12, 4, 40), new THREE.MeshStandardMaterial({ color: 0xd8d2c6, roughness: 0.4 }));
+    dish.rotation.x = Math.PI / 2; dish.position.set(55, 172, P.base + 2.1); dish.castShadow = true; owWalls.add(dish);
+    const honey = new THREE.Mesh(sph, new THREE.MeshStandardMaterial({ color: 0xd08a1e, roughness: 0.1, transparent: true, opacity: 0.85 }));
+    honey.scale.set(5, 4.5, 1.2); honey.position.set(53, 171, P.base + 4.3); owWalls.add(honey);
+    const bug = new THREE.Mesh(sph, new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: 0.6 }));
+    bug.scale.set(7, 3, 2.6); bug.rotation.z = 0.6; bug.position.set(90, 185, P.base + 2.4); owWalls.add(bug);
+    const bt = new THREE.Group(); bt.position.set(135, 190, P.base + 5.1); owWalls.add(bt);
+    const btG = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 60, 24, 1, true), mats.glass); btG.rotation.z = Math.PI / 2; bt.add(btG);
+    addCyl(bt, mats.water, 4, 32, new THREE.Vector3(-13, 0, 0), 'x');
+    addCyl(bt, mats.cotton, 4.1, 10, new THREE.Vector3(8, 0, 0), 'x');
+  }
+  const owLid = new THREE.Group(); body.add(owLid);
+  {
+    box(owLid, mats.lid, 0, OY0, 0, P.W, OY1, 3);
+    box(owLid, mats.mesh, 75, OY0 + 20, -0.1, 139, OY1 - 18, 3.1);
+    owLid.position.z = P.owH + 0.05;
+  }
+
+  // ---------- Sistema de humedad ----------
+  {
+    const r = mulberry32(5);
+    box(body, mats.water, rx0 + 0.5, ry0 + 0.5, P.base, rx1 - 0.5, ry1 - 0.5, P.base + 3).castShadow = false;
+    for (let i = 0; i < 30; i++) {
+      const m = new THREE.Mesh(sph, mats.cotton), s = 2.8 + r() * 2.2;
+      m.scale.set(s, s, Math.min(s, 4.4)); m.position.set(rx0 + 2.5 + r() * (rx1 - rx0 - 5), ry0 + 3 + r() * (ry1 - ry0 - 6), P.base + 5.5 + r() * 2.5); body.add(m);
+    }
+    box(body, mats.mesh, (P.gx0 + P.gx1) / 2 - P.sheet / 2, P.gy0 + 0.2, P.base + 0.1, (P.gx0 + P.gx1) / 2 + P.sheet / 2, P.gy1 - 0.2, P.T - 0.1).castShadow = false;
+  }
+  magnetsAt(body, MAG_NEST.concat(MAG_HATCH), P.T);
+
+  // ---------- Tapas ----------
+  const acr = new THREE.Group(); body.add(acr);
+  {
+    const g = new THREE.ExtrudeGeometry(shapesOf(clip(nestOutline, [rectPath(P.hatchX, -1, P.W + 1, P.Dn)], CL.ClipType.ctIntersection)), { depth: P.acr, bevelEnabled: false });
+    const m = new THREE.Mesh(g, mats.acr); m.position.z = P.T + 0.05; acr.add(m);
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), new THREE.LineBasicMaterial({ color: 0xcfe3ea, transparent: true, opacity: 0.4 }));
+    e.position.z = P.T + 0.05; acr.add(e);
+  }
+  const hatch = new THREE.Group(); body.add(hatch);
+  {
+    // rectángulo entero: la muesca está en la pieza impresa, así la tapa queda volada para levantarla
+    const g = new THREE.ExtrudeGeometry(shapesOf(clip(roundRect(0, 0, P.W, P.Dn + 20, P.rCorner), [rectPath(-1, -1, P.hatchX, P.Dn)], CL.ClipType.ctIntersection)), { depth: P.acr, bevelEnabled: false });
+    const m = new THREE.Mesh(g, mats.hatch); m.position.z = P.T + 0.05; hatch.add(m);
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), new THREE.LineBasicMaterial({ color: 0x9fd0ea, transparent: true, opacity: 0.7 }));
+    e.position.z = P.T + 0.05; hatch.add(e);
+  }
+  const cover = box(body, mats.cover, P.hatchX, 0, 0, P.W, P.Dn, P.cover); cover.castShadow = false; cover.visible = false;
+  const coverZ = P.T + P.acr + 0.1;
+  cover.position.z = coverZ + P.cover / 2;
+
+  // ---------- Hormigas ----------
+  const antMat = new THREE.MeshStandardMaterial({ color: 0x0b0807, roughness: 0.45 });
+  const gasterMat = new THREE.MeshStandardMaterial({ color: 0x1c150e, roughness: 0.6 });
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x140e0a, roughness: 0.55 });
+  const legGeo = new THREE.CylinderGeometry(1, 1, 1, 5);
+  const UP = new THREE.Vector3(0, 1, 0);
+  function stick(parent, a, b, r, mat) { const d = new THREE.Vector3().subVectors(b, a), L = d.length(); const m = new THREE.Mesh(legGeo, mat); m.scale.set(r, L, r); m.position.copy(a).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); parent.add(m); return m; }
+  function makeAnt(kind) {
+    const g = new THREE.Group(), bd = new THREE.Group(); g.add(bd);
+    const part = (sx, sy, sz, x, y, z, mat) => { const m = new THREE.Mesh(sph, mat || antMat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); bd.add(m); return m; };
+    const queen = kind === 'queen', major = kind === 'major', hs = major ? 1.45 : queen ? 1.15 : 1;
+    part(1.15 * hs, 0.95 * hs, 1.05 * hs, 3.4 + (hs - 1) * 1.1, 1.3, 0);
+    part(queen ? 2.1 : 1.7, queen ? 1.0 : 0.75, queen ? 0.95 : 0.65, 0.9, 1.35, 0);
+    part(0.35, 0.5, 0.4, -0.95, 1.2, 0);
+    queen ? part(3.3, 1.75, 1.85, -4.4, 1.6, 0, gasterMat) : part(2.0, 1.25, 1.35, -3.0, 1.35, 0, gasterMat);
+    const legs = [];
+    for (const s of [1, -1]) for (let i = 0; i < 3; i++) {
+      const hip = new THREE.Group(); hip.position.set(1.5 - 0.65 * i, 1.05, 0.42 * s); g.add(hip);
+      const foot = new THREE.Vector3([2.2, 0.2, -2.6][i], -1.05, (queen ? 3.9 : 3.3) * s);
+      const knee = foot.clone().multiplyScalar(0.42).add(new THREE.Vector3(0, 1.5, 0));
+      stick(hip, new THREE.Vector3(), knee, 0.16, legMat); stick(hip, knee, foot, 0.12, legMat);
+      legs.push({ hip, ph: (i % 2 === 0) === (s === 1) ? 0 : Math.PI });
+    }
+    const antennae = [];
+    for (const s of [1, -1]) {
+      const a = new THREE.Group(); a.position.set(3.9 + (hs - 1) * 1.6, 1.8, 0.45 * s); g.add(a);
+      const k = new THREE.Vector3(1.1, 1.2, 0.6 * s), tip = new THREE.Vector3(2.9, 0.5, 1.4 * s);
+      stick(a, new THREE.Vector3(), k, 0.1, legMat); stick(a, k, tip, 0.08, legMat); antennae.push(a);
+    }
+    g.scale.setScalar(queen ? 1.25 : major ? 1.18 : 0.82 + rnd() * 0.12);
+    return { obj: g, legs, ants: antennae };
+  }
+
+  const NY = new THREE.Vector3(0, 1, 0);
+  const antZ = P.base + 0.12;
+  const nodes = {};
+  CH.forEach((c) => { nodes[c.id] = { sample: () => { const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd()) * 0.36; return NW(c.x + Math.cos(a) * c.w * q, c.y + Math.sin(a) * c.h * q, antZ); } }; });
+  nodes.X = { sample: () => NW(OT + 12 + rnd() * (P.W - 2 * OT - 24), OY0 + OT + 10 + rnd() * (OY1 - OY0 - 2 * OT - 20), antZ) };
+  function makeEdge(a, b, pts) {
+    const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]));
+    return { a, b, pts, len: cum[cum.length - 1], at(s) { let i = 1; while (i < cum.length - 1 && cum[i] < s) i++; const t = Math.min(1, Math.max(0, (s - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1))); return { p: pts[i - 1].clone().lerp(pts[i], t), d: pts[i].clone().sub(pts[i - 1]).normalize() }; } };
+  }
+  const edges = tunnels.map((t) => {
+    const pts = t.line.map((v) => NW(v.x, v.y, antZ));
+    if (t.b === 'X') pts.push(NW(anchorX[0], OY0 + OT + 4, antZ), NW(anchorX[0], OY0 + OT + 14, antZ));
+    return makeEdge(t.a, t.b, pts);
+  });
+  const edgesAt = (id) => edges.filter((e) => e.a === id || e.b === id);
+
+  const antsGroup = new THREE.Group(); scene.add(antsGroup);
+  const ants = [];
+  function spawn(kind, node) {
+    const a = makeAnt(kind); antsGroup.add(a.obj);
+    const st = { ...a, kind, node, mode: 'wander', pos: nodes[node].sample(), fwd: new THREE.Vector3(rnd() - 0.5, 0, rnd() - 0.5).normalize(), left: 1 + (rnd() * 4 | 0), pause: rnd() * 2, speed: kind === 'queen' ? 3 : 11 + rnd() * 7, ph: rnd() * 6, last: null };
+    st.target = nodes[node].sample(); ants.push(st); return st;
+  }
+  spawn('queen', 'Q');
+  const plan = { Q: 3, H: 2, E: 3, L: 3, C: 3, D: 2, K: 3, M: 2, B: 1, X: 5 };
+  Object.entries(plan).forEach(([n, k]) => { for (let i = 0; i < k; i++) spawn(n === 'D' || (n === 'M' && i === 0) || (n === 'X' && i === 0) ? 'major' : 'worker', n); });
+
+  const tmpM = new THREE.Matrix4(), side = new THREE.Vector3(), f2 = new THREE.Vector3();
+  function pose(a) {
+    f2.copy(a.fwd).addScaledVector(NY, -a.fwd.dot(NY));
+    if (f2.lengthSq() < 1e-6) f2.set(1, 0, 0);
+    f2.normalize(); side.crossVectors(f2, NY);
+    tmpM.makeBasis(f2, NY, side); a.obj.quaternion.setFromRotationMatrix(tmpM); a.obj.position.copy(a.pos);
+  }
+  function chooseEdge(a) {
+    if (a.kind === 'queen') return null;
+    let opts = edgesAt(a.node);
+    if (opts.length > 1 && a.last) opts = opts.filter((e) => e !== a.last || rnd() < 0.15);
+    return opts.length ? opts[(rnd() * opts.length) | 0] : null;
+  }
+  function stepAnt(a, dt) {
+    a.moving = 0;
+    if (a.pause > 0) { a.pause -= dt; return; }
+    if (a.mode === 'edge') {
+      a.s += a.speed * dt; const e = a.edge;
+      if (a.s >= e.len) { a.node = a.dir > 0 ? e.b : e.a; a.mode = 'wander'; a.left = 1 + (rnd() * 4 | 0); a.target = nodes[a.node].sample(); a.pause = rnd() * 0.6; return; }
+      const q = e.at(a.dir > 0 ? a.s : e.len - a.s);
+      a.pos.copy(q.p); if (a.dir < 0) q.d.negate();
+      a.fwd.lerp(q.d, Math.min(1, dt * 10)).normalize(); a.moving = 1; return;
+    }
+    const to = a.target.clone().sub(a.pos), d = to.length();
+    if (d < 0.8) {
+      if (a.mode === 'toEdge') { a.mode = 'edge'; a.s = 0; return; }
+      a.left--; a.pause = 0.2 + rnd() * (a.kind === 'queen' ? 5 : 1.8);
+      if (a.left <= 0) {
+        const e = chooseEdge(a);
+        if (e) { a.edge = e; a.last = e; a.dir = e.a === a.node ? 1 : -1; a.mode = 'toEdge'; a.target = (a.dir > 0 ? e.pts[0] : e.pts[e.pts.length - 1]).clone(); return; }
+        a.left = 2 + (rnd() * 3 | 0);
+      }
+      a.target = nodes[a.node].sample(); return;
+    }
+    to.divideScalar(d); a.pos.addScaledVector(to, Math.min(d, a.speed * dt));
+    a.fwd.lerp(to, Math.min(1, dt * 8)).normalize(); a.moving = 1;
+  }
+  const clock = new THREE.Clock();
+  function animateLegs(a, dt) {
+    a.ph += dt * (a.moving ? a.speed * 1.4 : 0);
+    const amp = a.moving ? 0.42 : 0;
+    a.legs.forEach((l) => { const s = Math.sin(a.ph + l.ph); l.hip.rotation.y = s * amp; l.hip.rotation.x = Math.max(0, Math.cos(a.ph + l.ph)) * amp * 0.35 * Math.sign(l.hip.position.z); });
+    a.ants.forEach((t, i) => { t.rotation.y = Math.sin(clock.elapsedTime * 3.1 + i * 2 + a.speed) * 0.25; t.rotation.z = Math.sin(clock.elapsedTime * 2.3 + i) * 0.15; });
+  }
+
+  // Cría y restos
+  {
+    const r = mulberry32(31), brood = new THREE.Group(); body.add(brood);
+    const put = (mat, sx, sy, sz, x, y, rz) => { const m = new THREE.Mesh(sph, mat); m.scale.set(sx, sy, sz); m.position.set(x, y, P.base + sz); m.rotation.z = rz; brood.add(m); };
+    const cocoon = new THREE.MeshStandardMaterial({ color: 0xd8bf92, roughness: 0.85 });
+    const larva = new THREE.MeshStandardMaterial({ color: 0xf2ebdc, roughness: 0.45 });
+    const egg = new THREE.MeshStandardMaterial({ color: 0xfbf7ee, roughness: 0.3 });
+    const waste = new THREE.MeshStandardMaterial({ color: 0x2e241c, roughness: 1 });
+    const { C, L, E, Q, B } = chById;
+    for (let i = 0; i < 10; i++) put(cocoon, 3.6, 1.7, 1.7, C.x - 11 + (i % 5) * 5.4 + r(), C.y - 4 + (i / 5 | 0) * 6 + r(), 0.3 * (r() - 0.5));
+    for (let i = 0; i < 9; i++) put(larva, 2.2, 1.5, 1.4, L.x - 9 + (i % 4) * 5 + r(), L.y - 5 + (i / 4 | 0) * 4.5 + r(), r() * 3);
+    for (let i = 0; i < 24; i++) put(egg, 0.7, 0.5, 0.5, E.x - 7 + r() * 14, E.y - 3.5 + r() * 7, r() * 3);
+    for (let i = 0; i < 10; i++) put(egg, 0.7, 0.5, 0.5, Q.x + 8 + r() * 7, Q.y - 5 + r() * 9, r() * 3);
+    for (let i = 0; i < 18; i++) put(waste, 0.6 + r() * 1.4, 0.5 + r(), 0.6, B.x - 9 + r() * 18, B.y - 5 + r() * 10, r() * 3);
+  }
+
+  // ---------- Etiquetas ----------
+  const labelsEl = $('#labels');
+  const LBL = CH.map((c) => ({ t: c.name, p: NW(c.x, c.y + c.h / 2, P.T + 8), wet: !!c.wet }))
+    .concat([
+      { t: 'Tapa de humedad · algodón', p: NW(16, 64, P.T + 10), wet: true },
+      { t: 'Ranura de malla', p: NW(P.gx1, 40, P.T + 6), wet: true },
+      { t: 'Imán', p: NW(MAG_NEST[0][0], MAG_NEST[0][1], P.T + 6) },
+      { t: 'Paso al forrajeo', p: NW(anchorX[0], OY0, P.T + 14) },
+      { t: 'Área de forrajeo', p: NW(P.W / 2, (OY0 + OY1) / 2, P.owH + 14) },
+    ]);
+  LBL.forEach((l) => { l.el = document.createElement('div'); l.el.className = 'lbl' + (l.wet ? ' wet' : ''); l.el.textContent = l.t; labelsEl.appendChild(l.el); });
+  const v3 = new THREE.Vector3();
+  function placeLabels(w, h) {
+    LBL.forEach((l) => {
+      if (!state.lbl) { l.el.hidden = true; return; }
+      v3.copy(l.p).project(camera);
+      if (v3.z > 1) { l.el.hidden = true; return; }
+      l.el.hidden = false;
+      l.el.style.left = ((v3.x + 1) / 2 * w).toFixed(1) + 'px';
+      l.el.style.top = ((1 - v3.y) / 2 * h - 8).toFixed(1) + 'px';
+    });
+  }
+
+  // ---------- Controles UI ----------
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { acr: true, hatch: false, cover: false, owlid: true, lbl: true, ants: true, explode: false, print: false, red: false };
+  let ex = 0, hx = 0;
+  function apply() {
+    acr.visible = state.acr; hatch.visible = state.acr; cover.visible = state.cover; owLid.visible = state.owlid;
+    antsGroup.visible = state.ants;
+    mats.walls.map = state.print ? null : soil; mats.walls.color.set(state.print ? FIL : 0xffffff); mats.walls.needsUpdate = true;
+    mats.floor.map = state.print ? null : soil; mats.floor.color.set(state.print ? 0x4a3022 : 0x8c7b6c); mats.floor.needsUpdate = true;
+    mats.side.color.set(state.print ? 0x4a3022 : 0x3b2a20);
+    sun.color.set(state.red ? 0xff3b24 : 0xffe7c8); sun.intensity = state.red ? 0.75 : 0.95;
+    hemi.color.set(state.red ? 0xff4a30 : 0xfff0dc); hemi.groundColor.set(state.red ? 0x200604 : 0x3a2a20); hemi.intensity = state.red ? 0.35 : 0.55;
+    fill.intensity = state.red ? 0 : 0.25; amb.color.set(state.red ? 0xff5040 : 0xffffff);
+    scene.background = state.red ? BG_RED : BG;
+    document.querySelectorAll('.tg').forEach((b) => b.setAttribute('aria-pressed', String(!!state[b.dataset.t])));
+  }
+  document.querySelectorAll('.tg').forEach((b) => b.addEventListener('click', () => { state[b.dataset.t] = !state[b.dataset.t]; apply(); }));
+
+  const VIEWS = {
+    top: { p: [105, 470, 30], t: [105, 0, -105] },
+    persp: { p: [-90, 260, 190], t: [105, 10, -100] },
+    hum: { p: [-55, 110, 30], t: [22, 6, -64] },
+    queen: { p: [57, 95, -6], t: [55, P.base, -58] },
+  };
+  let tween = null;
+  function goView(k, instant) {
+    const v = VIEWS[k], to = { p: new THREE.Vector3(...v.p), t: new THREE.Vector3(...v.t) };
+    if (instant || reduce) { camera.position.copy(to.p); controls.target.copy(to.t); controls.update(); return; }
+    tween = { from: { p: camera.position.clone(), t: controls.target.clone() }, to, k: 0 };
+  }
+  document.querySelectorAll('.vw').forEach((b) => b.addEventListener('click', () => goView(b.dataset.v)));
+
+  // ---------- Panel ----------
+  const nMag = MAG_NEST.length + MAG_HATCH.length + MAG_OW.length;
+  const sheetL = Math.round(P.gy1 - P.gy0 - 1);
+  const PARTS = [
+    ['Nido + forrajeo (una pieza)', `${P.W} × ${P.Dt} × ${P.owH} mm`, 'imprimir'],
+    ['Tapa del nido', `${P.W - P.hatchX} × ${P.Dn} × ${P.acr} mm`, 'acrílico'],
+    ['Tapa de humedad', `${P.hatchX} × ${P.Dn} × ${P.acr} mm`, 'acrílico'],
+    ['Tapa del forrajeo', `${P.W} × ${P.Dt - P.Dn} × 3 mm`, 'imprimir'],
+    ['Tapa oscura', `${P.W - P.hatchX} × ${P.Dn} × ${P.cover} mm`, 'imprimir'],
+    ['Malla separadora', `${sheetL} × ${P.depth + 1} mm`, 'malla inox.'],
+    ['Malla de ventilación', '64 × 44 mm', 'malla inox.'],
+    ['Imanes de neodimio', `${P.magD} × ${P.magH} mm · ${nMag} + ${nMag}`, 'comprar'],
+    ['Algodón, esponja o yeso', 'reservorio', 'a gusto'],
+  ];
+  $('#parts').innerHTML = PARTS.map((p, i) => `<tr><td class="n">${i + 1}</td><td>${p[0]}</td><td class="m">${p[1]}</td><td class="k">${p[2]}</td></tr>`).join('');
+  $('#magDd').textContent = `Ø${P.magD} × ${P.magH} mm · hueco Ø${(P.magD + P.magClr).toFixed(1)} × ${(P.magH + 0.2).toFixed(1)}`;
+  $('#fp').textContent = `Se imprime de una vez, acostada: ${P.W} × ${P.Dt} mm de base y ${P.owH} mm de alto. Entra en una cama de 220 × 220 mm. Los ${nMag} imanes van en los huecos; a cada tapa se le pega otro imán (o una arandela de hierro) en el mismo lugar.`;
+  const fmt = (x) => x.toFixed(1).replace('.', ',');
+  const checks = [
+    { ok: minWall >= P.wall, t: `Pared mínima entre cavidades: ${fmt(minWall)} mm`, s: `pedido ≥ ${P.wall} mm · entre ${minWallPair}` },
+    { ok: minEdge >= P.edgeMin, t: `Margen de cámaras y túneles al borde: ${fmt(minEdge)} mm`, s: `pedido ≥ ${P.edgeMin} mm` },
+    { ok: minMag >= 2, t: `Huecos de imán a la cavidad más cercana: ${fmt(minMag)} mm`, s: 'pedido ≥ 2 mm de material' },
+    { ok: minMagOut >= 1.5, t: `Huecos de imán al borde exterior: ${fmt(minMagOut)} mm`, s: 'pedido ≥ 1,5 mm de pared' },
+    { ok: P.groove - P.sheet >= 0.15, t: `Ranura ${fmt(P.groove)} mm para malla de hasta ${P.sheet} mm`, s: 'juego para que entre sin forzar' },
+    { ok: P.W <= 220 && P.Dt <= 220, t: `Una sola pieza de ${P.W} × ${P.Dt} mm`, s: 'cama de 220 × 220 mm' },
+  ];
+  $('#checks').innerHTML = checks.map((c) => `<li><span class="pill ${c.ok ? 'ok' : 'bad'}">${c.ok ? 'OK' : 'REVISAR'}</span><span><span class="v">${c.t}</span><br><span class="sub">${c.s}</span></span></li>`).join('');
+  window.__formicario = { minWall, minWallPair, minEdge, minMag, minMagOut, nMag, wallsPolys: wallsEx.length };
+
+  // ---------- Bucle ----------
+  let W = 0, H = 0;
+  function resize() { const r = stage.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height); renderer.setSize(W, H, false); camera.aspect = W / H; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+  apply(); goView('persp', true); ants.forEach(pose);
+  function frame() {
+    const dt = Math.min(0.05, clock.getDelta());
+    if (tween) {
+      tween.k = Math.min(1, tween.k + dt * 1.6); const e = 1 - Math.pow(1 - tween.k, 3);
+      camera.position.lerpVectors(tween.from.p, tween.to.p, e); controls.target.lerpVectors(tween.from.t, tween.to.t, e);
+      if (tween.k >= 1) tween = null;
+    }
+    ex += ((state.explode ? 1 : 0) - ex) * Math.min(1, dt * 5);
+    hx += ((state.hatch || state.explode ? 1 : 0) - hx) * Math.min(1, dt * 5);
+    acr.position.z = 40 * ex;
+    hatch.position.z = 30 * hx; hatch.position.x = -12 * hx;
+    cover.position.z = coverZ + P.cover / 2 + 75 * ex;
+    owLid.position.z = P.owH + 0.05 + 50 * ex;
+    if (state.ants) ants.forEach((a) => { stepAnt(a, dt); pose(a); animateLegs(a, dt); });
+    controls.update(); renderer.render(scene, camera); placeLabels(W, H);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
