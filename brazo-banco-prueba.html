@@ -35,7 +35,7 @@ th{color:var(--muted);font-weight:600}
 .ley span::before{content:"";display:inline-block;width:12px;height:3px;margin-right:4px;vertical-align:middle;background:var(--c)}
 @media (max-width:820px){.wrap{grid-template-columns:1fr;height:auto}#view{height:60vh}aside{border-left:0;border-top:1px solid var(--line)}}
 </style>
-<style>.volver-taller{position:fixed;z-index:5;right:12px;top:10px;font:500 13px/1.2 system-ui,sans-serif;background:var(--panel,#fff);border:1px solid var(--line,#ccc);border-radius:6px;padding:6px 10px}.volver-taller a{color:var(--ink,CanvasText);text-decoration:none}</style></head>
+<style>.volver-taller{position:fixed;z-index:5;left:12px;top:10px;font:500 13px/1.2 system-ui,sans-serif;background:var(--panel,#fff);border:1px solid var(--line,#ccc);border-radius:6px;padding:6px 10px}.volver-taller a{color:var(--ink,CanvasText);text-decoration:none}</style></head>
 <body>
 <nav class="volver-taller"><a href="./" onclick="if(history.length>1){history.back();return false}">&larr; Todos los proyectos</a></nav>
 
@@ -180,10 +180,12 @@ camera.position.set(420,-460,360); controls.target.set(0,-10,110); controls.upda
 const fase = document.getElementById("fase"), reloj = document.getElementById("reloj");
 let vueltas = 0;
 (function loop(ahora){
-  const dtr = Math.min(0.1, (ahora - ultimo)/1000); ultimo = ahora;
+  // el reloj del cuadro puede venir un poco ANTES que el performance.now() del arranque: sin el max(0, ...) el
+  // tiempo quedaba negativo, anim[-2] no existe y la animacion se cortaba en el primer cuadro (1-nov)
+  const dtr = Math.max(0, Math.min(0.1, (ahora - ultimo)/1000)); ultimo = ahora;
   const r = R();
   if (corriendo){ t += dtr*vel; if (t >= r.duracion){ t -= r.duracion; vueltas++; } }
-  const i = Math.min(r.anim.length-1, Math.floor(t / r.dt_anim)), a = r.anim[i];
+  const i = Math.max(0, Math.min(r.anim.length-1, Math.floor(t / r.dt_anim))), a = r.anim[i];
   aplicar(a[0], a[1], a[2], a[3]);
   let txt = r.fases[0][1]; for (const f of r.fases) if (t >= f[0]) txt = f[1];
   fase.textContent = txt; reloj.textContent = `t = ${fmt(t)} s de ${fmt(r.duracion)} · vuelta ${vueltas+1}`;

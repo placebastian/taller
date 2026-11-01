@@ -1,4 +1,4 @@
-# Taller de Bastian
+# Taller de proyectos
 
 Proyectos impresos en 3D (Snapmaker U1): brazo pick-and-place, cinta transportadora 28BYJ-48, formicario y tornillería M2.
 
